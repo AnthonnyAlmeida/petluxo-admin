@@ -102,6 +102,15 @@ export default function Step2Description({ fields, setField, errors, onNext, onB
         + Adicionar bullet
       </button>
 
+      <Field
+        label="Tags"
+        name="tags"
+        value={fields.tags.join(', ')}
+        onChange={v => setField('tags', v.split(',').map(t => t.trim()).filter(Boolean))}
+        placeholder="Ex: cama, veludo, conforto, gato"
+        hint="Separe por vírgula — ajudam na busca do site"
+      />
+
       <div className={styles.nav}>
         <button type="button" className={styles.btnBack} onClick={onBack}>← Voltar</button>
         <button type="button" className={styles.btnNext} onClick={onNext}>Próximo →</button>

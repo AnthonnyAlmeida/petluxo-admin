@@ -39,7 +39,7 @@ export function usePublish() {
         originalPrice: fields.originalPrice || undefined,
         category: fields.category,
         order: fields.order,
-        image: `images/products/${fields.image}`,
+        image: `/images/products/${fields.image}`,
         badge: fields.badge || undefined,
         buyLink: fields.buyLink || undefined,
         tags: fields.tags.filter(Boolean),
@@ -63,12 +63,11 @@ export function usePublish() {
   function appendProductToFile(content, product) {
     const lastBracket = content.lastIndexOf(']')
     if (lastBracket === -1) throw new Error('Formato de products.js inválido')
-    const before = content.slice(0, lastBracket).trimEnd()
-    const productStr = JSON.stringify(product, null, 2)
+    const before = content.slice(0, lastBracket).trimEnd().replace(/,\s*$/, '')
+    const productStr = '  ' + JSON.stringify(product, null, 2)
       .split('\n')
-      .map((line, i) => i === 0 ? '  ' + line : '  ' + line)
-      .join('\n')
-    return before + ',\n' + productStr + '\n]\n'
+      .join('\n  ')
+    return before + ',\n' + productStr + '\n];\n'
   }
 
   function reset() {
