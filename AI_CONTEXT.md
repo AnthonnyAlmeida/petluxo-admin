@@ -57,3 +57,14 @@ Documentadas em .env.example
 - `src/components/ProductPreview.jsx` + `ProductPreview.module.css` — card de preview do produto com imagem, badge, preço e CTA
 - `src/components/PublishStatus.jsx` + `PublishStatus.module.css` — lista de etapas de publicação com ícones animados e estados (wait/active/done/success/error)
 - Build limpo sem erros — 27 módulos transformados (concluído em 20/05/2026)
+
+### Prompt 5A — Step1Basics e Step2Description (concluído)
+- `src/steps/Step1Basics.jsx` + `Step1Basics.module.css` — formulário de informações básicas: nome, nome curto, subtítulo, preço, preço original, categorias (multi-select por botões), badge e link PagBank
+- `src/steps/Step2Description.jsx` + `Step2Description.module.css` — formulário de descrição com integração ao `generatePrompt`, botão copiar prompt + abrir Claude, e gerenciamento dinâmico de bullets
+- Build limpo sem erros — 27 módulos transformados (concluído em 20/05/2026)
+
+### Prompt 5B — Step3Photo, Step4Review e Step5Publish (concluído)
+- `src/steps/Step3Photo.jsx` + `Step3Photo.module.css` — upload de imagem com conversão automática para WebP, preview com miniatura, tamanho em KB e badge de confirmação
+- `src/steps/Step4Review.jsx` + `Step4Review.module.css` — revisão final com card `ProductPreview` centralizado e tabela de dados do produto; botão PUBLICAR
+- `src/steps/Step5Publish.jsx` + `Step5Publish.module.css` — tela de publicação integrada ao `usePublish` com `PublishStatus`; botões "Ver no site" e "Adicionar outro produto"
+- Fase 5 (todos os steps) completa — build limpo, 27 módulos transformados (concluído em 20/05/2026)

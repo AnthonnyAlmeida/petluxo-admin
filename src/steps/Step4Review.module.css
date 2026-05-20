@@ -1,0 +1,78 @@
+.step {
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.previewWrapper {
+  display: flex;
+  justify-content: center;
+}
+
+.dataList {
+  display: flex;
+  flex-direction: column;
+  border: 0.5px solid #e8ddd0;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.dataRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 0.625rem 0.875rem;
+  font-size: 0.8125rem;
+  border-bottom: 0.5px solid #e8ddd0;
+}
+
+.dataRow:last-child {
+  border-bottom: none;
+}
+
+.dataKey {
+  color: var(--color-muted);
+  flex-shrink: 0;
+}
+
+.dataVal {
+  color: var(--color-dark);
+  font-weight: 500;
+  text-align: right;
+  word-break: break-all;
+}
+
+.nav {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-top: 0.25rem;
+}
+
+.btnBack {
+  padding: 0.75rem 1.25rem;
+  background: transparent;
+  color: var(--color-muted);
+  border: 0.5px solid #e0d5c5;
+  border-radius: var(--radius-md);
+  font-size: 0.8125rem;
+}
+
+.btnPublish {
+  flex: 1;
+  padding: 0.875rem;
+  background: var(--color-gold);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  transition: opacity var(--transition);
+}
+
+.btnPublish:active {
+  opacity: 0.8;
+}
