@@ -40,3 +40,13 @@ Documentadas em .env.example
 - AdminPage placeholder com botão de logout que limpa a session e redireciona para /login
 - Rotas configuradas em App.jsx: `/login`, `/admin` (protegida), `*` → `/login`
 - Build confirma 27 módulos sem erros (concluído em 20/05/2026)
+
+### Fase 3 — Dados e lógica pura (concluída)
+- `src/data/categories.js` — lista de categorias do catálogo
+- `src/data/productTemplate.js` — factory `createProductTemplate(nextId, nextOrder)`
+- `src/lib/github.js` — `getProductsFile`, `commitFile`, `commitProducts`, `commitImage` via GitHub Contents API
+- `src/lib/imageConverter.js` — `convertToWebP`, `blobToBase64`, `generateImageFilename`
+- `src/lib/promptGenerator.js` — `generatePrompt` para refinamento de copy via IA
+- `src/hooks/useProductForm.js` — estado do formulário multi-step com validação por etapa
+- `src/hooks/usePublish.js` — fluxo de publicação: upload de imagem → commit products.js → aguarda deploy
+- Build limpo sem erros (concluído em 20/05/2026)
