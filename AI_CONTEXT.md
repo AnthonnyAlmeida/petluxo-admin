@@ -68,3 +68,13 @@ Documentadas em .env.example
 - `src/steps/Step4Review.jsx` + `Step4Review.module.css` — revisão final com card `ProductPreview` centralizado e tabela de dados do produto; botão PUBLICAR
 - `src/steps/Step5Publish.jsx` + `Step5Publish.module.css` — tela de publicação integrada ao `usePublish` com `PublishStatus`; botões "Ver no site" e "Adicionar outro produto"
 - Fase 5 (todos os steps) completa — build limpo, 27 módulos transformados (concluído em 20/05/2026)
+
+### Fase 6 — Painel principal (concluída)
+- `src/pages/AdminPage.jsx` substituído pelo componente final que orquestra todos os steps, hooks e componentes
+- `src/pages/AdminPage.module.css` implementado com header sticky, card central, layout responsivo e tokens CSS
+- Header com logo ✦ PetLuxo, label "Admin" e botão SAIR funcional
+- Busca automática de `nextId` e `nextOrder` via `getProductsFile()` ao montar o painel
+- Fluxo completo: Step1 → Step2 → Step3 → Step4 → Step5 (publicação) → reset para novo produto
+- `StepIndicator` exibido nos steps 0–3; oculto no Step5
+- Build limpo sem erros — 53 módulos transformados (concluído em 20/05/2026)
+- Pendente apenas: deploy na Vercel (Fase 8)

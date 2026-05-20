@@ -1,1 +1,89 @@
-/* AdminPage styles — implementado nas fases seguintes */
+.page {
+  min-height: 100vh;
+  background: var(--color-cream);
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  background: var(--color-dark);
+  padding: 0.875rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.headerLogo {
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
+  color: var(--color-gold);
+  letter-spacing: 0.05em;
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.headerLabel {
+  font-size: 0.75rem;
+  color: var(--color-muted);
+  opacity: 0.6;
+}
+
+.btnLogout {
+  background: none;
+  border: 0.5px solid #3a3a3a;
+  border-radius: var(--radius-sm);
+  color: var(--color-muted);
+  font-size: 0.75rem;
+  padding: 0.375rem 0.75rem;
+  letter-spacing: 0.04em;
+  transition: border-color var(--transition);
+}
+
+.btnLogout:hover {
+  border-color: var(--color-muted);
+}
+
+.card {
+  background: #fff;
+  border-radius: var(--radius-lg);
+  border: 0.5px solid #e8ddd0;
+  margin: 1.5rem auto;
+  width: 100%;
+  max-width: 480px;
+  overflow: hidden;
+}
+
+.cardHeader {
+  padding: 1.25rem 1.25rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.cardTitle {
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
+  color: var(--color-dark);
+}
+
+.cardSubtitle {
+  font-size: 0.8125rem;
+  color: var(--color-muted);
+}
+
+@media (max-width: 520px) {
+  .card {
+    margin: 0;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    min-height: calc(100vh - 52px);
+  }
+}
