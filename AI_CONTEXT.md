@@ -33,3 +33,10 @@ Documentadas em .env.example
 - Reset global em src/styles/globals.css
 - .gitignore e .env.example configurados
 - Projeto sobe com `npm run dev` sem erros (confirmado em 20/05/2026)
+
+### Fase 2 — Login (concluída)
+- LoginPage com formulário de senha via `import.meta.env.VITE_ADMIN_PASSWORD`
+- Guard de autenticação `PrivateRoute` usando `sessionStorage` (`petluxo-admin-auth`)
+- AdminPage placeholder com botão de logout que limpa a session e redireciona para /login
+- Rotas configuradas em App.jsx: `/login`, `/admin` (protegida), `*` → `/login`
+- Build confirma 27 módulos sem erros (concluído em 20/05/2026)
