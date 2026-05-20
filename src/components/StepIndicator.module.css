@@ -1,0 +1,36 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem 1.25rem 0;
+}
+
+.dots {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.dot {
+  height: 4px;
+  flex: 1;
+  border-radius: 2px;
+  background: #e8ddd0;
+  transition: background var(--transition);
+}
+
+.dotDone {
+  background: var(--color-gold);
+  opacity: 0.45;
+}
+
+.dotActive {
+  background: var(--color-gold);
+  opacity: 1;
+}
+
+.label {
+  font-size: 0.6875rem;
+  color: var(--color-muted);
+  letter-spacing: 0.02em;
+}

@@ -50,3 +50,10 @@ Documentadas em .env.example
 - `src/hooks/useProductForm.js` — estado do formulário multi-step com validação por etapa
 - `src/hooks/usePublish.js` — fluxo de publicação: upload de imagem → commit products.js → aguarda deploy
 - Build limpo sem erros (concluído em 20/05/2026)
+
+### Fase 4 — Componentes base (concluída)
+- `src/components/Field.jsx` + `Field.module.css` — input/textarea reutilizável com label, hint, erro e required
+- `src/components/StepIndicator.jsx` + `StepIndicator.module.css` — barra de progresso de 5 passos com labels
+- `src/components/ProductPreview.jsx` + `ProductPreview.module.css` — card de preview do produto com imagem, badge, preço e CTA
+- `src/components/PublishStatus.jsx` + `PublishStatus.module.css` — lista de etapas de publicação com ícones animados e estados (wait/active/done/success/error)
+- Build limpo sem erros — 27 módulos transformados (concluído em 20/05/2026)
