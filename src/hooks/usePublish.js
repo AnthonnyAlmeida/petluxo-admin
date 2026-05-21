@@ -60,14 +60,42 @@ export function usePublish() {
     }
   }
 
+  function productToJS(product) {
+    const lines = ['  {']
+    for (const [key, value] of Object.entries(product)) {
+      if (value === null || value === undefined) {
+        lines.push(`    ${key}: null,`)
+      } else if (typeof value === 'string') {
+        const escaped = value.replace(/\\/g, '\\\\').replace(/'/g, "\\'")
+        lines.push(`    ${key}: '${escaped}',`)
+      } else if (typeof value === 'number') {
+        lines.push(`    ${key}: ${value},`)
+      } else if (Array.isArray(value)) {
+        if (value.length === 0) {
+          lines.push(`    ${key}: [],`)
+        } else if (value.every(v => typeof v === 'string')) {
+          const items = value.map(v => `'${v.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`).join(', ')
+          lines.push(`    ${key}: [${items}],`)
+        } else {
+          const json = JSON.stringify(value, null, 2)
+            .split('\n')
+            .map((l, i) => i === 0 ? `    ${key}: ${l}` : `    ${l}`)
+            .join('\n')
+          lines.push(json + ',')
+        }
+      } else {
+        lines.push(`    ${key}: ${JSON.stringify(value)},`)
+      }
+    }
+    lines.push('  }')
+    return lines.join('\n')
+  }
+
   function appendProductToFile(content, product) {
     const lastBracket = content.lastIndexOf(']')
     if (lastBracket === -1) throw new Error('Formato de products.js inválido')
     const before = content.slice(0, lastBracket).trimEnd().replace(/,\s*$/, '')
-    const productStr = '  ' + JSON.stringify(product, null, 2)
-      .split('\n')
-      .join('\n  ')
-    return before + ',\n' + productStr + '\n];\n'
+    return before + ',\n' + productToJS(product) + '\n];\n'
   }
 
   function reset() {

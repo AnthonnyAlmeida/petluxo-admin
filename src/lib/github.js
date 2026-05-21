@@ -21,7 +21,7 @@ export async function getProductsFile() {
   if (!res.ok) throw new Error(`GitHub GET falhou: ${res.status}`)
   const data = await res.json()
   return {
-    content: atob(data.content.replace(/\n/g, '')),
+    content: decodeURIComponent(escape(atob(data.content.replace(/\n/g, '')))),
     sha: data.sha,
   }
 }

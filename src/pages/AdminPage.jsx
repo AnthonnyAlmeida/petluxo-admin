@@ -25,14 +25,15 @@ export default function AdminPage() {
     async function fetchNextIds() {
       try {
         const { content } = await getProductsFile()
-        const idMatches = [...content.matchAll(/id:\s*(\d+)/g)]
-        const orderMatches = [...content.matchAll(/order:\s*(\d+)/g)]
-        const maxId = idMatches.length > 0
-          ? Math.max(...idMatches.map(m => parseInt(m[1])))
-          : 0
-        const maxOrder = orderMatches.length > 0
-          ? Math.max(...orderMatches.map(m => parseInt(m[1])))
-          : 0
+        const productsMatch = content.match(/export const PRODUCTS\s*=\s*(\[[\s\S]*?\]);/)
+        let maxId = 0
+        let maxOrder = 0
+        if (productsMatch) {
+          const ids = [...content.matchAll(/^\s{2}\{\s*\n\s+id:\s*(\d+)/gm)]
+          const orders = [...content.matchAll(/\border:\s*(\d+)/g)]
+          maxId = ids.length > 0 ? Math.max(...ids.map(m => parseInt(m[1]))) : 0
+          maxOrder = orders.length > 0 ? Math.max(...orders.map(m => parseInt(m[1]))) : 0
+        }
         setNextId(maxId + 1)
         setNextOrder(maxOrder + 1)
       } catch {
