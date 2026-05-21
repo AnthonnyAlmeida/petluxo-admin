@@ -16,7 +16,7 @@ Usuário principal: mãe do desenvolvedor, via iPad.
 pages/       LoginPage (formulário de senha), AdminPage (orquestrador do painel)
 steps/       Step1Basics, Step2Description, Step3Photo, Step4Review, Step5Publish
 components/  Field, StepIndicator, ProductPreview, PublishStatus
-lib/         github.js (API), imageConverter.js (WebP), promptGenerator.js (prompt Claude)
+lib/         github.js (API), imageConverter.js (WebP), formatPrice.js (formatação de valores monetários)
 hooks/       useProductForm (estado multi-step), usePublish (fluxo de publicação)
 data/        categories.js, productTemplate.js
 styles/      variables.css (tokens), globals.css (reset)
@@ -51,6 +51,30 @@ styles/      variables.css (tokens), globals.css (reset)
 - Fallback em caso de erro: setNextId(100) e setNextOrder(100)
 - Bug de timing corrigido: useProductForm tem useEffect que sincroniza fields.id e fields.order quando nextId/nextOrder mudam após o fetch
 
+## Formatação de Preços (src/lib/formatPrice.js)
+- Função formatPrice(value) aplicada em onBlur dos campos price e originalPrice
+- Aceita: números inteiros (229), vírgula (229,90), ponto (229.90)
+- Formata para: "R$ X,XX" (ex: 229 → R$ 229,00)
+- Campo vazio permanece vazio (sem forçar formato)
+- Digitação livre no onChange, formatação ao sair do campo (onBlur)
+
+## Melhorias Recentes
+1. **Suporte a produtos com tamanhos** — toggle no Step1, array variants, prices+buyLinks no commit
+2. **Formatação automática de preços** — usuária digita apenas número, campo formata com R$ e 2 casas decimais
+3. **Correção de estado do formulário** — campos não desaparecem ao navegar entre steps
+4. **Remoção da seção Refinar com Claude** — Step2Description simplificado, promptGenerator.js removido
+5. **Field component melhorado** — suporta onBlur para tratamento customizado ao sair do campo
+
+## Suporte a Variantes (prices + buyLinks)
+- Campo `hasVariants` (boolean) e `variants` (array `{ size, price, link }`) em productTemplate e useProductForm
+- Toggle visual switch em Step1Basics: quando ligado oculta price/buyLink e exibe linhas de variantes
+- Cada linha de variante: tamanho, preço (com formatPrice no onBlur), link PagBank
+- Hook: `addVariant()`, `updateVariant(index, key, value)`, `removeVariant(index)`
+- Validação: sem variantes → price obrigatório; com variantes → ao menos 1 variante
+- usePublish: se hasVariants gera `prices: [{size, price}]` e `buyLinks: [{size, link}]`; senão usa `price` e `buyLink`
+- productToJS: novo branch para arrays de objetos com aspas simples (single-quote convention)
+- Step4Review: mostra linha "Tamanhos" (sizes) quando hasVariants=true
+
 ## Pendências
 
 Funcionalidades:
@@ -59,4 +83,4 @@ Funcionalidades:
 - Deploy na Vercel
 
 Baixa prioridade:
-- Suporte a prices + buyLinks (múltiplos tamanhos)
+- Suporte a `originalPrice` em produtos com variantes

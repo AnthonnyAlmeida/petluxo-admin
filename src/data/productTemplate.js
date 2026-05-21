@@ -14,5 +14,7 @@ export function createProductTemplate(nextId, nextOrder) {
     badge: '',
     buyLink: '',
     tags: [],
+    hasVariants: false,
+    variants: [],
   }
 }

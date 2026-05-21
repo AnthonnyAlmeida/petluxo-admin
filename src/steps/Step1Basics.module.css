@@ -55,6 +55,132 @@
   padding-top: 0.5rem;
 }
 
+.variantToggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem;
+  background: var(--color-cream-dark);
+  border-radius: var(--radius-md);
+  border: 0.5px solid #e0d5c5;
+}
+
+.variantToggleLabel {
+  font-size: 0.875rem;
+  color: var(--color-dark);
+}
+
+.toggleSwitch {
+  position: relative;
+  width: 44px;
+  height: 26px;
+  background: #ccc;
+  border-radius: 13px;
+  border: none;
+  cursor: pointer;
+  transition: background var(--transition);
+  flex-shrink: 0;
+}
+
+.toggleSwitch::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform var(--transition);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.toggleSwitchOn {
+  background: var(--color-gold);
+}
+
+.toggleSwitchOn::after {
+  transform: translateX(18px);
+}
+
+.variantsSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.variantsHeader {
+  display: grid;
+  grid-template-columns: 70px 1fr 2fr 28px;
+  gap: 0.5rem;
+  padding-bottom: 0.125rem;
+}
+
+.variantHeaderCell {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.variantRow {
+  display: grid;
+  grid-template-columns: 70px 1fr 2fr 28px;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.variantInput {
+  padding: 0.6rem 0.625rem;
+  border: 0.5px solid #e0d5c5;
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  background: #fff;
+  color: var(--color-dark);
+  outline: none;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.variantInput:focus {
+  border-color: var(--color-gold);
+}
+
+.variantRemove {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: none;
+  color: var(--color-muted);
+  font-size: 1.25rem;
+  line-height: 1;
+  padding: 0;
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+
+.btnAddVariant {
+  font-size: 0.8125rem;
+  color: var(--color-gold-dark);
+  background: none;
+  border: 0.5px dashed #d4b896;
+  border-radius: var(--radius-sm);
+  padding: 0.5rem;
+  width: 100%;
+  transition: background var(--transition);
+}
+
+.btnAddVariant:active {
+  background: var(--color-cream-dark);
+}
+
+.variantError {
+  font-size: 0.6875rem;
+  color: var(--color-error);
+}
+
 .btnNext {
   padding: 0.75rem 1.75rem;
   background: var(--color-dark);

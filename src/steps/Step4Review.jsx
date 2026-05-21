@@ -7,10 +7,14 @@ export default function Step4Review({ fields, onBack, onPublish }) {
     { key: 'Subtítulo', val: fields.subtitle || '—' },
     { key: 'Preço original', val: fields.originalPrice || '—' },
     { key: 'Badge', val: fields.badge || '—' },
-    { key: 'Link PagBank', val: fields.buyLink ? '✓ Configurado' : '—' },
+    !fields.hasVariants && { key: 'Link PagBank', val: fields.buyLink ? '✓ Configurado' : '—' },
+    fields.hasVariants && {
+      key: 'Tamanhos',
+      val: fields.variants.map(v => v.size).filter(Boolean).join(', ') || '—',
+    },
     { key: 'Foto', val: fields.image || '—' },
     { key: 'Bullets', val: fields.bullets.filter(Boolean).length + ' item(s)' },
-  ]
+  ].filter(Boolean)
 
   return (
     <div className={styles.step}>

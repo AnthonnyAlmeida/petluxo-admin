@@ -6,6 +6,7 @@ export default function Field({
   type = 'text',
   value,
   onChange,
+  onBlur,
   placeholder,
   hint,
   error,
@@ -32,6 +33,7 @@ export default function Field({
           className={inputClass}
           value={value}
           onChange={e => onChange(e.target.value)}
+          onBlur={onBlur}
           placeholder={placeholder}
           rows={rows || 4}
         />
@@ -42,6 +44,7 @@ export default function Field({
           className={inputClass}
           value={value}
           onChange={e => onChange(e.target.value)}
+          onBlur={onBlur}
           placeholder={placeholder}
         />
       )}

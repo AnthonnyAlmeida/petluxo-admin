@@ -35,13 +35,19 @@ export function usePublish() {
         subtitle: fields.subtitle,
         description: fields.description,
         bullets: fields.bullets.filter(Boolean),
-        price: fields.price,
+        ...(fields.hasVariants
+          ? { prices: fields.variants.map(v => ({ size: v.size, price: v.price })) }
+          : { price: fields.price }
+        ),
         originalPrice: fields.originalPrice || undefined,
         category: fields.category,
         order: fields.order,
         image: `/images/products/${fields.image}`,
         badge: fields.badge || undefined,
-        buyLink: fields.buyLink || undefined,
+        ...(fields.hasVariants
+          ? { buyLinks: fields.variants.map(v => ({ size: v.size, link: v.link })) }
+          : { buyLink: fields.buyLink || undefined }
+        ),
         tags: fields.tags.filter(Boolean),
       }
 
@@ -75,6 +81,18 @@ export function usePublish() {
           lines.push(`    ${key}: [],`)
         } else if (value.every(v => typeof v === 'string')) {
           const items = value.map(v => `'${v.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`).join(', ')
+          lines.push(`    ${key}: [${items}],`)
+        } else if (value.every(v => typeof v === 'object' && v !== null && !Array.isArray(v))) {
+          const items = value.map(obj => {
+            const pairs = Object.entries(obj).map(([k, val]) => {
+              if (typeof val === 'string') {
+                const escaped = val.replace(/\\/g, '\\\\').replace(/'/g, "\\'")
+                return `${k}: '${escaped}'`
+              }
+              return `${k}: ${JSON.stringify(val)}`
+            }).join(', ')
+            return `{ ${pairs} }`
+          }).join(', ')
           lines.push(`    ${key}: [${items}],`)
         } else {
           const json = JSON.stringify(value, null, 2)

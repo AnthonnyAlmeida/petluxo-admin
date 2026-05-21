@@ -104,6 +104,9 @@ export default function AdminPage() {
             setField={form.setField}
             errors={form.errors}
             onNext={form.nextStep}
+            addVariant={form.addVariant}
+            updateVariant={form.updateVariant}
+            removeVariant={form.removeVariant}
           />
         )}
         {form.currentStep === 1 && (
