@@ -40,7 +40,7 @@ export default function AdminPage() {
         const maxOrder = allOrders.length > 0 ? Math.max(...allOrders) : 0
         setNextId(maxId + 1)
         setNextOrder(maxOrder + 1)
-      } catch {
+      } catch (err) {
         setNextId(100)
         setNextOrder(100)
       } finally {

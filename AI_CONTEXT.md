@@ -49,6 +49,7 @@ styles/      variables.css (tokens), globals.css (reset)
   - id: /^\s+id:\s*(\d+)\s*,/gm — captura linhas que começam com espaços seguidos de `id:`, correspondendo exatamente ao formato do arquivo
   - order: /^\s+order:\s*(\d+)\s*,/gm — mesmo padrão para o campo order
 - Fallback em caso de erro: setNextId(100) e setNextOrder(100)
+- Bug de timing corrigido: useProductForm tem useEffect que sincroniza fields.id e fields.order quando nextId/nextOrder mudam após o fetch
 
 ## Pendências
 

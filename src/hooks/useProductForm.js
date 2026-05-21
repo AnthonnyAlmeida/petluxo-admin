@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createProductTemplate } from '../data/productTemplate'
 
 const TOTAL_STEPS = 5
@@ -7,6 +7,10 @@ export function useProductForm(nextId, nextOrder) {
   const [currentStep, setCurrentStep] = useState(0)
   const [fields, setFields] = useState(() => createProductTemplate(nextId, nextOrder))
   const [errors, setErrors] = useState({})
+
+  useEffect(() => {
+    setFields(prev => ({ ...prev, id: nextId, order: nextOrder }))
+  }, [nextId, nextOrder])
 
   function setField(key, value) {
     setFields(prev => ({ ...prev, [key]: value }))
