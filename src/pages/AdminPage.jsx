@@ -25,19 +25,24 @@ export default function AdminPage() {
     async function fetchNextIds() {
       try {
         const { content } = await getProductsFile()
-        const productsMatch = content.match(/export const PRODUCTS\s*=\s*(\[[\s\S]*?\]);/)
-        let maxId = 0
-        let maxOrder = 0
-        if (productsMatch) {
-          const ids = [...content.matchAll(/^\s{2}\{\s*\n\s+id:\s*(\d+)/gm)]
-          const orders = [...content.matchAll(/\border:\s*(\d+)/g)]
-          maxId = ids.length > 0 ? Math.max(...ids.map(m => parseInt(m[1]))) : 0
-          maxOrder = orders.length > 0 ? Math.max(...orders.map(m => parseInt(m[1]))) : 0
+        const allIds = []
+        const allOrders = []
+        const idRegex = /^\s+id:\s*(\d+)\s*,/gm
+        const orderRegex = /^\s+order:\s*(\d+)\s*,/gm
+        let m
+        while ((m = idRegex.exec(content)) !== null) {
+          allIds.push(parseInt(m[1]))
         }
+        while ((m = orderRegex.exec(content)) !== null) {
+          allOrders.push(parseInt(m[1]))
+        }
+        const maxId = allIds.length > 0 ? Math.max(...allIds) : 0
+        const maxOrder = allOrders.length > 0 ? Math.max(...allOrders) : 0
         setNextId(maxId + 1)
         setNextOrder(maxOrder + 1)
       } catch {
-        // usa defaults se falhar
+        setNextId(100)
+        setNextOrder(100)
       } finally {
         setLoadingIds(false)
       }

@@ -45,11 +45,10 @@ styles/      variables.css (tokens), globals.css (reset)
 - Alguns produtos têm variantes: prices: [{ size, price }] e buyLinks: [{ size, link }]
 
 ## Cálculo de nextId/nextOrder (AdminPage.jsx)
-- O useEffect usa regex ancorado para evitar falsos positivos:
-  - id: /^\s{2}\{\s*
-\s+id:\s*(\d+)/gm — captura apenas o campo id no início de cada objeto do array
-  - order: /order:\s*(\d+)/g — usa word boundary para evitar capturar campos com nomes semelhantes
-- Ambos só são calculados se o bloco export const PRODUCTS = [...] for encontrado no conteúdo
+- O useEffect usa regex multiline com while+exec para evitar falsos positivos:
+  - id: /^\s+id:\s*(\d+)\s*,/gm — captura linhas que começam com espaços seguidos de `id:`, correspondendo exatamente ao formato do arquivo
+  - order: /^\s+order:\s*(\d+)\s*,/gm — mesmo padrão para o campo order
+- Fallback em caso de erro: setNextId(100) e setNextOrder(100)
 
 ## Pendências
 
