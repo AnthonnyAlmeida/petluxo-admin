@@ -1,86 +1,75 @@
 # AI_CONTEXT.md — PetLuxo Admin
 
 ## Visão geral
-Painel administrativo da PetLuxo para adição de produtos por não-desenvolvedores.
-Fluxo: Login com senha → formulário de 5 steps → upload WebP → commit no GitHub → deploy automático na Vercel.
-Usuário principal: mãe do desenvolvedor, via iPad.
+Painel administrativo React para gestão de produtos da PetLuxo. Usuária não-técnica (iPad). Fluxo: Login → Listagem → Criar/Editar produto (5 steps) → Publicação automática no GitHub → Deploy na Vercel.
 
-## Stack
-- React 18 + Vite
-- react-router-dom
-- CSS Modules + src/styles/variables.css (design tokens)
-- GitHub Contents API (leitura e escrita de products.js e imagens)
-- Canvas API (conversão de imagens para WebP)
+## Stack e ambiente
+- React 18 + Vite, react-router-dom, CSS Modules
+- GitHub Contents API para leitura/escrita de `products.js` e imagens
+- Canvas API para conversão de imagens em WebP
+- `.env.local`: `VITE_ADMIN_PASSWORD`, `VITE_GITHUB_OWNER`, `VITE_GITHUB_REPO`, `VITE_GITHUB_BRANCH`, `VITE_GITHUB_TOKEN`
 
-## Estrutura src/
-pages/       LoginPage (formulário de senha), AdminPage (orquestrador do painel)
-steps/       Step1Basics, Step2Description, Step3Photo, Step4Review, Step5Publish
-components/  Field, StepIndicator, ProductPreview, PublishStatus
-lib/         github.js (API), imageConverter.js (WebP), formatPrice.js (formatação de valores monetários)
-hooks/       useProductForm (estado multi-step), usePublish (fluxo de publicação)
-data/        categories.js, productTemplate.js
-styles/      variables.css (tokens), globals.css (reset)
+## Rotas (App.jsx)
+- `/login` → LoginPage
+- `/admin` → AdminPage (protegida) — criação e edição de produto
+- `/admin/products` → ProductsPage (protegida)
+- `*` → redirect `/login`
+- Após login bem-sucedido: navega para `/admin/products`
 
-## Variáveis de ambiente
-- VITE_ADMIN_PASSWORD — senha de acesso ao painel
-- VITE_GITHUB_OWNER — AnthonnyAlmeida
-- VITE_GITHUB_REPO — petluxo
-- VITE_GITHUB_BRANCH — main
-- VITE_GITHUB_TOKEN — personal access token com escopo repo
+## Estrutura de arquivos
+```
+src/
+  pages/   LoginPage, AdminPage, ProductsPage
+  steps/   Step1Basics, Step2Description, Step3Photo, Step4Review, Step5Publish
+  components/ Field, StepIndicator, ProductPreview, PublishStatus
+  hooks/   useProductForm, usePublish
+  lib/     github.js, imageConverter.js, formatPrice.js
+  data/    categories.js, productTemplate.js
+  styles/  variables.css, globals.css
+```
 
-## Convenções obrigatórias
-- CSS Modules em todos os componentes; camelCase nas classes; tokens via variables.css
-- Todo prompt começa lendo este arquivo
-- Todo prompt termina atualizando este arquivo com cat > (sobrescrever completo, sem histórico)
-- NUNCA executar funções de src/lib/github.js sem instrução explícita do usuário
-- Caminho de imagem sempre com / inicial: /images/products/arquivo.webp
-- Encoding UTF-8: usar btoa(unescape(encodeURIComponent(content))) para escrever e decodeURIComponent(escape(atob())) para ler em github.js
-- Formato JS puro no commit: chaves sem aspas, strings com aspas simples (função productToJS em usePublish.js)
+## Convenções
+1. CSS Modules em todos os componentes — camelCase, tokens via `variables.css`
+2. Encoding UTF-8 GitHub: escrita `btoa(unescape(encodeURIComponent(s)))`, leitura `decodeURIComponent(escape(atob(s)))`
+3. Caminhos de imagem sempre com `/` inicial: `/images/products/arquivo.webp`
+4. `products.js` usa JS puro: chaves sem aspas, strings com aspas simples — gerado por `productToJS()`
 
-## Repositório alvo (petluxo)
-- Arquivo: src/data/products.js
-- Exports: export const CATEGORIES = [...] e export const PRODUCTS = [...] (sem default export)
-- Imagens: public/images/products/ — URL com /images/products/arquivo.webp
-- Campos: id, name, shortName, subtitle, description, bullets, price, originalPrice, category, order, image, badge, buyLink, tags
-- Alguns produtos têm variantes: prices: [{ size, price }] e buyLinks: [{ size, link }]
+## Modelo de produto
+Campos: `id, name, shortName, subtitle, description, bullets, category[], order, image, badge, tags, originalPrice`
 
-## Cálculo de nextId/nextOrder (AdminPage.jsx)
-- O useEffect usa regex multiline com while+exec para evitar falsos positivos:
-  - id: /^\s+id:\s*(\d+)\s*,/gm — captura linhas que começam com espaços seguidos de `id:`, correspondendo exatamente ao formato do arquivo
-  - order: /^\s+order:\s*(\d+)\s*,/gm — mesmo padrão para o campo order
-- Fallback em caso de erro: setNextId(100) e setNextOrder(100)
-- Bug de timing corrigido: useProductForm tem useEffect que sincroniza fields.id e fields.order quando nextId/nextOrder mudam após o fetch
+**Simples** (`hasVariants: false`): `price`, `buyLink`, `variants: []`
 
-## Formatação de Preços (src/lib/formatPrice.js)
-- Função formatPrice(value) aplicada em onBlur dos campos price e originalPrice
-- Aceita: números inteiros (229), vírgula (229,90), ponto (229.90)
-- Formata para: "R$ X,XX" (ex: 229 → R$ 229,00)
-- Campo vazio permanece vazio (sem forçar formato)
-- Digitação livre no onChange, formatação ao sair do campo (onBlur)
+**Com variantes** (`hasVariants: true`): `price: ''`, `buyLink: ''`, `prices[{size, price}]`, `buyLinks[{size, link}]`, `variants` (estado interno do painel)
 
-## Melhorias Recentes
-1. **Suporte a produtos com tamanhos** — toggle no Step1, array variants, prices+buyLinks no commit
-2. **Formatação automática de preços** — usuária digita apenas número, campo formata com R$ e 2 casas decimais
-3. **Correção de estado do formulário** — campos não desaparecem ao navegar entre steps
-4. **Remoção da seção Refinar com Claude** — Step2Description simplificado, promptGenerator.js removido
-5. **Field component melhorado** — suporta onBlur para tratamento customizado ao sair do campo
+URL de imagens: `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}${product.image}`
 
-## Suporte a Variantes (prices + buyLinks)
-- Campo `hasVariants` (boolean) e `variants` (array `{ size, price, link }`) em productTemplate e useProductForm
-- Toggle visual switch em Step1Basics: quando ligado oculta price/buyLink e exibe linhas de variantes
-- Cada linha de variante: tamanho, preço (com formatPrice no onBlur), link PagBank
-- Hook: `addVariant()`, `updateVariant(index, key, value)`, `removeVariant(index)`
-- Validação: sem variantes → price obrigatório; com variantes → ao menos 1 variante
-- usePublish: se hasVariants gera `prices: [{size, price}]` e `buyLinks: [{size, link}]`; senão usa `price` e `buyLink`
-- productToJS: novo branch para arrays de objetos com aspas simples (single-quote convention)
-- Step4Review: mostra linha "Tamanhos" (sizes) quando hasVariants=true
+## Hooks principais
+- `useProductForm(nextId, nextOrder, initialData=null)` — estado do formulário (criação ou edição)
+- `usePublish()` — orquestração de publicação: `publish()`, `update()`, `reset()`
 
-## Pendências
+## AdminPage.jsx
+- Lê `location.state?.editProduct` via `useLocation()`; se existe, é modo edição
+- Título dinâmico: `"Editar produto"` vs `"Novo produto"`
+- Botão "Voltar" (↖ 0.75rem padding, acima do StepIndicator): navega para `/admin/products`
+- `handlePublish`: chama `update()` em edição, `publish()` em criação
+- Após sucesso: navega para `/admin/products`
+- `nextId`/`nextOrder`: regex `/^\s+id:\s*(\d+)\s*,/gm` no products.js (max + 1, fallback 100)
 
-Funcionalidades:
-- Implementar editar e excluir produtos
-- Re-buscar nextId/nextOrder após publicação bem-sucedida
-- Deploy na Vercel
+## ProductsPage.jsx
+- Mount: `getProductsFile()` → `parseProducts()` → ordena por `order` desc
+- Filtros: busca por `name`/`shortName`; categoria (pills, seleção única)
+- Card: thumbnail 52px, nome, preço, categoria, badges, Editar + lixeira
+- **Editar**: `navigate('/admin', { state: { editProduct: product } })`
+- **Excluir**: `window.confirm()` → `removeProductFromFile()` → `putProductsFile()` → refetch
 
-Baixa prioridade:
-- Suporte a `originalPrice` em produtos com variantes
+## Fluxos
+**Criar:** ProductsPage → `/admin` (sem state) → 5 steps → `publish()` → `/admin/products`
+
+**Editar:** ProductsPage → `/admin` (com `state.editProduct`) → 5 steps → `update()` → `/admin/products`
+
+**Excluir:** ProductsPage → confirm → `removeProductFromFile()` → `putProductsFile()` → refetch
+
+## Step3Photo (edição)
+- `fields.image` normalizado para filename; preview do GitHub exibido
+- Botão "Trocar foto" permite substituir
+- Se não trocar: `imageBlob = null` → `update()` pula upload

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { getProductsFile, commitProducts, commitImage } from '../lib/github'
+import { getProductsFile, commitProducts, commitFile, commitImage } from '../lib/github'
 import { blobToBase64 } from '../lib/imageConverter'
 
 export function usePublish() {
@@ -116,11 +116,79 @@ export function usePublish() {
     return before + ',\n' + productToJS(product) + '\n];\n'
   }
 
+  function replaceProductInFile(content, product) {
+    const idPattern = `\n    id: ${product.id},`
+    const idIndex = content.indexOf(idPattern)
+    if (idIndex === -1) throw new Error(`Produto id=${product.id} não encontrado no catálogo`)
+    const blockStart = content.lastIndexOf('\n  {', idIndex)
+    if (blockStart === -1) throw new Error(`Bloco do produto id=${product.id} inválido`)
+    const blockEnd = content.indexOf('\n  }', blockStart + 3)
+    if (blockEnd === -1) throw new Error(`Fim do bloco do produto id=${product.id} não encontrado`)
+    const before = content.slice(0, blockStart)
+    const after = content.slice(blockEnd + 4)
+    return before + '\n' + productToJS(product) + after
+  }
+
+  async function update(fields, imageBlob) {
+    setStatus('publishing')
+    setError('')
+
+    try {
+      if (imageBlob !== null) {
+        updateStep('image', { state: 'active' })
+        const base64 = await blobToBase64(imageBlob)
+        await commitImage(fields.image, base64)
+        updateStep('image', { state: 'done', detail: fields.image })
+      } else {
+        updateStep('image', { state: 'done', detail: 'Foto mantida' })
+      }
+
+      updateStep('products', { state: 'active' })
+      const { content, sha } = await getProductsFile()
+
+      const updatedProduct = {
+        id: fields.id,
+        name: fields.name,
+        shortName: fields.shortName,
+        subtitle: fields.subtitle,
+        description: fields.description,
+        bullets: fields.bullets.filter(Boolean),
+        ...(fields.hasVariants
+          ? { prices: fields.variants.map(v => ({ size: v.size, price: v.price })) }
+          : { price: fields.price }
+        ),
+        originalPrice: fields.originalPrice || undefined,
+        category: fields.category,
+        order: fields.order,
+        image: `/images/products/${fields.image}`,
+        badge: fields.badge || undefined,
+        ...(fields.hasVariants
+          ? { buyLinks: fields.variants.map(v => ({ size: v.size, link: v.link })) }
+          : { buyLink: fields.buyLink || undefined }
+        ),
+        tags: fields.tags.filter(Boolean),
+      }
+
+      const updatedContent = replaceProductInFile(content, updatedProduct)
+      await commitFile('src/data/products.js', updatedContent, 'feat: produto editado via painel admin', sha)
+      updateStep('products', { state: 'done', detail: 'products.js atualizado' })
+
+      updateStep('deploy', { state: 'active' })
+      await new Promise(r => setTimeout(r, 3000))
+      updateStep('deploy', { state: 'done', detail: 'Vercel deploy disparado' })
+
+      setStatus('success')
+    } catch (err) {
+      setError(err.message)
+      setStatus('error')
+    }
+  }
+
   function reset() {
     setStatus('idle')
     setError('')
     setSteps(prev => prev.map(s => ({ ...s, state: 'wait', detail: '' })))
   }
 
-  return { status, steps, error, publish, reset }
+  return { status, steps, error, publish, update, reset }
 }

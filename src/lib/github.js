@@ -53,6 +53,23 @@ export async function commitProducts(newProductsContent, sha) {
   )
 }
 
+export async function putProductsFile(content, sha) {
+  return commitFile(
+    'src/data/products.js',
+    content,
+    'feat: produto removido via painel admin',
+    sha
+  )
+}
+
+export function parseProducts(content) {
+  const idx = content.indexOf('export const PRODUCTS')
+  const eqIdx = content.indexOf('=', idx) + 1
+  const lastBracket = content.lastIndexOf(']')
+  const arrayStr = content.slice(eqIdx, lastBracket + 1).trim()
+  return new Function(`return ${arrayStr}`)()
+}
+
 export async function commitImage(filename, base64Content) {
   const path = `public/images/products/${filename}`
   let sha = null

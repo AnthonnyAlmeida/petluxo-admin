@@ -1,15 +1,18 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { createProductTemplate } from '../data/productTemplate'
 
 const TOTAL_STEPS = 5
 
-export function useProductForm(nextId, nextOrder) {
+export function useProductForm(nextId, nextOrder, initialData = null) {
   const [currentStep, setCurrentStep] = useState(0)
-  const [fields, setFields] = useState(() => createProductTemplate(nextId, nextOrder))
+  const [fields, setFields] = useState(() => initialData ?? createProductTemplate(nextId, nextOrder))
   const [errors, setErrors] = useState({})
+  const isEditMode = useRef(initialData !== null)
 
   useEffect(() => {
-    setFields(prev => ({ ...prev, id: nextId, order: nextOrder }))
+    if (!isEditMode.current) {
+      setFields(prev => ({ ...prev, id: nextId, order: nextOrder }))
+    }
   }, [nextId, nextOrder])
 
   function setField(key, value) {
@@ -69,7 +72,7 @@ export function useProductForm(nextId, nextOrder) {
   }
 
   function resetForm() {
-    setFields(createProductTemplate(nextId, nextOrder))
+    setFields(isEditMode.current ? initialData : createProductTemplate(nextId, nextOrder))
     setErrors({})
     setCurrentStep(0)
   }

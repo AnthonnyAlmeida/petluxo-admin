@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useProductForm } from '../hooks/useProductForm'
 import { usePublish } from '../hooks/usePublish'
 import { getProductsFile } from '../lib/github'
@@ -13,12 +13,16 @@ import styles from './AdminPage.module.css'
 
 export default function AdminPage() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const editProduct = location.state?.editProduct ?? null
+  const isEditMode = editProduct !== null
+
   const [nextId, setNextId] = useState(100)
   const [nextOrder, setNextOrder] = useState(100)
   const [imageBlob, setImageBlob] = useState(null)
   const [loadingIds, setLoadingIds] = useState(true)
 
-  const form = useProductForm(nextId, nextOrder)
+  const form = useProductForm(nextId, nextOrder, editProduct)
   const publishHook = usePublish()
 
   useEffect(() => {
@@ -57,20 +61,23 @@ export default function AdminPage() {
 
   async function handlePublish() {
     form.nextStep()
-    await publishHook.publish(form.fields, imageBlob)
+    if (isEditMode) {
+      await publishHook.update(form.fields, imageBlob)
+    } else {
+      await publishHook.publish(form.fields, imageBlob)
+    }
   }
 
   function handleNewProduct() {
-    publishHook.reset()
-    form.resetForm()
-    setImageBlob(null)
+    navigate('/admin/products')
   }
 
+  const modeTitle = isEditMode ? 'Editar produto' : 'Novo produto'
   const stepTitles = [
-    { title: 'Novo produto', subtitle: 'Informações básicas' },
-    { title: 'Novo produto', subtitle: 'Descrição e destaques' },
-    { title: 'Novo produto', subtitle: 'Foto do produto' },
-    { title: 'Novo produto', subtitle: 'Revisão final' },
+    { title: modeTitle, subtitle: 'Informações básicas' },
+    { title: modeTitle, subtitle: 'Descrição e destaques' },
+    { title: modeTitle, subtitle: 'Foto do produto' },
+    { title: modeTitle, subtitle: 'Revisão final' },
     { title: 'Publicando', subtitle: 'Enviando para o site' },
   ]
 
@@ -92,6 +99,12 @@ export default function AdminPage() {
           <p className={styles.cardSubtitle}>
             {loadingIds ? 'Carregando...' : current.subtitle}
           </p>
+        </div>
+
+        <div className={styles.toolbar}>
+          <button className={styles.btnBack} onClick={() => navigate('/admin/products')}>
+            ← Voltar
+          </button>
         </div>
 
         {form.currentStep < 4 && (

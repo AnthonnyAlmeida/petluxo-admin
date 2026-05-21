@@ -11,7 +11,7 @@ export default function LoginPage() {
     e.preventDefault()
     if (password === import.meta.env.VITE_ADMIN_PASSWORD) {
       sessionStorage.setItem('petluxo-admin-auth', 'true')
-      navigate('/admin')
+      navigate('/admin/products')
     } else {
       setError('Senha incorreta. Tente novamente.')
       setPassword('')

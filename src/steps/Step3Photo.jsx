@@ -1,12 +1,32 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { convertToWebP, generateImageFilename } from '../lib/imageConverter'
 import styles from './Step3Photo.module.css'
+
+const GITHUB_OWNER = import.meta.env.VITE_GITHUB_OWNER
+const GITHUB_REPO = import.meta.env.VITE_GITHUB_REPO
+const GITHUB_BRANCH = import.meta.env.VITE_GITHUB_BRANCH
 
 export default function Step3Photo({ fields, setField, errors, onNext, onBack, onImageBlob }) {
   const [converting, setConverting] = useState(false)
   const [preview, setPreview] = useState(null)
   const [fileSize, setFileSize] = useState(null)
   const inputRef = useRef(null)
+
+  // Detecta modo edição: fields.image vem com caminho completo (/images/products/...)
+  const initialImagePath = useRef(
+    fields.image && fields.image.startsWith('/images/products/') ? fields.image : null
+  )
+  const existingImageUrl = initialImagePath.current
+    ? `https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/${GITHUB_BRANCH}${initialImagePath.current}`
+    : null
+
+  // Normaliza fields.image para apenas o filename, evitando prefixo duplo no commit
+  useEffect(() => {
+    if (initialImagePath.current) {
+      const filename = initialImagePath.current.replace('/images/products/', '')
+      setField('image', filename)
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleFile(file) {
     if (!file) return
@@ -34,7 +54,13 @@ export default function Step3Photo({ fields, setField, errors, onNext, onBack, o
   function handleReset() {
     setPreview(null)
     setFileSize(null)
-    setField('image', '')
+    if (initialImagePath.current) {
+      // Modo edição: restaura o filename original
+      const filename = initialImagePath.current.replace('/images/products/', '')
+      setField('image', filename)
+    } else {
+      setField('image', '')
+    }
     onImageBlob(null)
     if (inputRef.current) inputRef.current.value = ''
   }
@@ -49,7 +75,8 @@ export default function Step3Photo({ fields, setField, errors, onNext, onBack, o
         onChange={handleChange}
       />
 
-      {!preview && !converting && (
+      {/* Modo criação: nenhuma foto ainda */}
+      {!initialImagePath.current && !preview && !converting && (
         <div className={styles.uploadArea} onClick={() => inputRef.current?.click()}>
           <div className={styles.uploadIcon}>
             <svg className={styles.uploadIconSvg} viewBox="0 0 24 24">
@@ -67,6 +94,23 @@ export default function Step3Photo({ fields, setField, errors, onNext, onBack, o
         <p className={styles.converting}>Convertendo para WebP...</p>
       )}
 
+      {/* Modo edição: mostra foto atual do GitHub quando nenhuma nova foi selecionada */}
+      {initialImagePath.current && !preview && !converting && (
+        <>
+          <div className={styles.preview}>
+            <img src={existingImageUrl} alt="foto atual" className={styles.previewThumb} />
+            <div className={styles.previewInfo}>
+              <p className={styles.previewName}>{initialImagePath.current.replace('/images/products/', '')}</p>
+              <p className={styles.previewSize}>Foto atual</p>
+            </div>
+          </div>
+          <button type="button" className={styles.btnChange} onClick={() => inputRef.current?.click()}>
+            Trocar foto
+          </button>
+        </>
+      )}
+
+      {/* Preview de nova foto selecionada (criação ou edição) */}
       {preview && !converting && (
         <>
           <div className={styles.preview}>
