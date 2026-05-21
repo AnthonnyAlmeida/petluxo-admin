@@ -17,12 +17,35 @@ export function useProductForm(nextId, nextOrder) {
     setErrors(prev => ({ ...prev, [key]: '' }))
   }
 
+  function addVariant() {
+    setFields(prev => ({
+      ...prev,
+      variants: [...prev.variants, { size: '', price: '', link: '' }],
+    }))
+  }
+
+  function updateVariant(index, key, value) {
+    setFields(prev => {
+      const updated = [...prev.variants]
+      updated[index] = { ...updated[index], [key]: value }
+      return { ...prev, variants: updated }
+    })
+  }
+
+  function removeVariant(index) {
+    setFields(prev => ({
+      ...prev,
+      variants: prev.variants.filter((_, i) => i !== index),
+    }))
+  }
+
   function validate(step) {
     const errs = {}
     if (step === 0) {
       if (!fields.name.trim()) errs.name = 'Nome obrigatório'
       if (!fields.shortName.trim()) errs.shortName = 'Nome curto obrigatório'
-      if (!fields.price.trim()) errs.price = 'Preço obrigatório'
+      if (!fields.hasVariants && !fields.price.trim()) errs.price = 'Preço obrigatório'
+      if (fields.hasVariants && fields.variants.length === 0) errs.variants = 'Adicione ao menos um tamanho'
       if (fields.category.length === 0) errs.category = 'Selecione ao menos uma categoria'
     }
     if (step === 1) {
@@ -60,5 +83,8 @@ export function useProductForm(nextId, nextOrder) {
     prevStep,
     resetForm,
     isLastStep: currentStep === TOTAL_STEPS - 1,
+    addVariant,
+    updateVariant,
+    removeVariant,
   }
 }
