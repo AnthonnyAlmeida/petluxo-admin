@@ -24,7 +24,7 @@ src/
   components/ Field, StepIndicator, ProductPreview, PublishStatus
   hooks/   useProductForm, usePublish
   lib/     github.js, imageConverter.js, formatPrice.js
-  data/    categories.js, productTemplate.js
+  data/    productTemplate.js
   styles/  variables.css, globals.css
 ```
 
@@ -33,6 +33,7 @@ src/
 2. Encoding UTF-8 GitHub: escrita `btoa(unescape(encodeURIComponent(s)))`, leitura `decodeURIComponent(escape(atob(s)))`
 3. Caminhos de imagem sempre com `/` inicial: `/images/products/arquivo.webp`
 4. `products.js` usa JS puro: chaves sem aspas, strings com aspas simples — gerado por `productToJS()`
+5. Categorias não são hardcoded: `parseCategories()` em `github.js` extrai `CATEGORIES` do mesmo `products.js` do repo petluxo
 
 ## Modelo de produto
 Campos: `id, name, shortName, subtitle, description, bullets, category[], order, image, badge, tags, originalPrice`
@@ -52,14 +53,15 @@ URL de imagens: `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}${p
 - Título dinâmico: `"Editar produto"` vs `"Novo produto"`
 - Botão "Voltar" (↖ 0.75rem padding, acima do StepIndicator): navega para `/admin/products`
 - `handlePublish`: chama `update()` em edição, `publish()` em criação
-- `fetchNextIds()` chamada: (1) no mount, (2) após publicação bem-sucedida — garante IDs corretos em criações sequenciais
+- `fetchNextIds()` chamada: (1) no mount, (2) após publicação bem-sucedida — garante IDs corretos em criações sequenciais; também chama `parseCategories()` e armazena em estado `categories`
 - `handleNewProduct` (clique em "Adicionar outro produto" no Step5): recarrega IDs, reseta formulário + imageBlob, volta para Step 0
 - `nextId`/`nextOrder`: regex `/^\s+id:\s*(\d+)\s*,/gm` no products.js (max + 1, fallback 100)
+- `categories` passado como prop para `Step1Basics`
 
 ## ProductsPage.jsx
-- Mount: `getProductsFile()` → `parseProducts()` → ordena por `order` desc
-- **Polling automático**: `setInterval` a cada 30s refaz fetch silenciosamente; pausa se `deleting !== null`
-- Filtros: busca por `name`/`shortName`; categoria (pills, seleção única)
+- Mount: `getProductsFile()` → `parseProducts()` + `parseCategories()` → ordena produtos por `order` desc
+- **Polling automático**: `setInterval` a cada 30s refaz fetch silenciosamente; pausa se `deleting !== null`; atualiza `categories` se mudarem
+- Filtros: busca por `name`/`shortName`; categoria (pills, seleção única) — categorias vindas do estado dinâmico
 - Card: thumbnail 52px, nome, preço, categoria, badges, Editar + lixeira
 - **Editar**: `navigate('/admin', { state: { editProduct: product } })`
 - **Excluir**: `window.confirm()` → `removeProductFromFile()` → `putProductsFile()` → refetch

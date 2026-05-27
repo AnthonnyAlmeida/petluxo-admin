@@ -70,6 +70,14 @@ export function parseProducts(content) {
   return new Function(`return ${arrayStr}`)()
 }
 
+export function parseCategories(content) {
+  const idx = content.indexOf('export const CATEGORIES')
+  const eqIdx = content.indexOf('=', idx) + 1
+  const lastBracket = content.indexOf(']', eqIdx) + 1
+  const arrayStr = content.slice(eqIdx, lastBracket).trim()
+  return new Function(`return ${arrayStr}`)()
+}
+
 export async function commitImage(filename, base64Content) {
   const path = `public/images/products/${filename}`
   let sha = null

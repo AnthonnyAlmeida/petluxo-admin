@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getProductsFile, parseProducts, putProductsFile } from '../lib/github'
-import { CATEGORIES } from '../data/categories'
+import { getProductsFile, parseProducts, parseCategories, putProductsFile } from '../lib/github'
 import styles from './ProductsPage.module.css'
 
 const OWNER = import.meta.env.VITE_GITHUB_OWNER
@@ -24,9 +23,9 @@ function getDisplayPrice(product) {
   return product.price || '—'
 }
 
-function getCategoryLabel(categoryIds) {
+function getCategoryLabel(categoryIds, categories) {
   if (!categoryIds || categoryIds.length === 0) return ''
-  const found = CATEGORIES.find(c => c.id === categoryIds[0])
+  const found = categories.find(c => c.id === categoryIds[0])
   return found ? found.label : categoryIds[0]
 }
 
@@ -57,6 +56,7 @@ function removeProductFromFile(content, productId) {
 export default function ProductsPage() {
   const navigate = useNavigate()
   const [products, setProducts] = useState([])
+  const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [deleting, setDeleting] = useState(null)
@@ -77,10 +77,13 @@ export default function ProductsPage() {
         const { content } = await getProductsFile()
         const parsed = parseProducts(content)
         const newProducts = parsed.sort((a, b) => b.order - a.order)
+        const newCategories = parseCategories(content)
 
-        // Atualizar apenas se houver mudanças
         if (JSON.stringify(newProducts) !== JSON.stringify(products)) {
           setProducts(newProducts)
+        }
+        if (JSON.stringify(newCategories) !== JSON.stringify(categories)) {
+          setCategories(newCategories)
         }
       } catch (err) {
         // Ignorar erros silenciosamente durante o polling
@@ -97,6 +100,7 @@ export default function ProductsPage() {
       const { content } = await getProductsFile()
       const parsed = parseProducts(content)
       setProducts(parsed.sort((a, b) => b.order - a.order))
+      setCategories(parseCategories(content))
     } catch (err) {
       setError(err.message)
     } finally {
@@ -188,7 +192,7 @@ export default function ProductsPage() {
               >
                 Todos
               </button>
-              {CATEGORIES.map(cat => (
+              {categories.map(cat => (
                 <button
                   key={cat.id}
                   className={`${styles.filterBtn} ${categoryFilter === cat.id ? styles.filterBtnActive : ''}`}
@@ -234,10 +238,10 @@ export default function ProductsPage() {
                   <p className={styles.name}>{product.name}</p>
                   <div className={styles.meta}>
                     <span className={styles.price}>{getDisplayPrice(product)}</span>
-                    {getCategoryLabel(product.category) && (
+                    {getCategoryLabel(product.category, categories) && (
                       <>
                         <span className={styles.metaSep}>·</span>
-                        <span className={styles.category}>{getCategoryLabel(product.category)}</span>
+                        <span className={styles.category}>{getCategoryLabel(product.category, categories)}</span>
                       </>
                     )}
                   </div>

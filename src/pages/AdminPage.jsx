@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useProductForm } from '../hooks/useProductForm'
 import { usePublish } from '../hooks/usePublish'
-import { getProductsFile } from '../lib/github'
+import { getProductsFile, parseCategories } from '../lib/github'
 import StepIndicator from '../components/StepIndicator'
 import Step1Basics from '../steps/Step1Basics'
 import Step2Description from '../steps/Step2Description'
@@ -19,6 +19,7 @@ export default function AdminPage() {
 
   const [nextId, setNextId] = useState(100)
   const [nextOrder, setNextOrder] = useState(100)
+  const [categories, setCategories] = useState([])
   const [imageBlob, setImageBlob] = useState(null)
   const [loadingIds, setLoadingIds] = useState(true)
 
@@ -43,6 +44,7 @@ export default function AdminPage() {
       const maxOrder = allOrders.length > 0 ? Math.max(...allOrders) : 0
       setNextId(maxId + 1)
       setNextOrder(maxOrder + 1)
+      setCategories(parseCategories(content))
     } catch (err) {
       setNextId(100)
       setNextOrder(100)
@@ -124,6 +126,7 @@ export default function AdminPage() {
             addVariant={form.addVariant}
             updateVariant={form.updateVariant}
             removeVariant={form.removeVariant}
+            categories={categories}
           />
         )}
         {form.currentStep === 1 && (

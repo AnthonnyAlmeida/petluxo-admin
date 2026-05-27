@@ -1,9 +1,8 @@
 import Field from '../components/Field'
 import { formatPrice } from '../lib/formatPrice'
-import { CATEGORIES } from '../data/categories'
 import styles from './Step1Basics.module.css'
 
-export default function Step1Basics({ fields, setField, errors, onNext, addVariant, updateVariant, removeVariant }) {
+export default function Step1Basics({ fields, setField, errors, onNext, addVariant, updateVariant, removeVariant, categories = [] }) {
   function toggleCategory(id) {
     const current = fields.category
     const updated = current.includes(id)
