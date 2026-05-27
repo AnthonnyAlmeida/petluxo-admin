@@ -67,6 +67,29 @@ export default function ProductsPage() {
     fetchProducts()
   }, [])
 
+  // Polling automático a cada 30 segundos
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      // Não fazer polling se está deletando
+      if (deleting !== null) return
+
+      try {
+        const { content } = await getProductsFile()
+        const parsed = parseProducts(content)
+        const newProducts = parsed.sort((a, b) => b.order - a.order)
+
+        // Atualizar apenas se houver mudanças
+        if (JSON.stringify(newProducts) !== JSON.stringify(products)) {
+          setProducts(newProducts)
+        }
+      } catch (err) {
+        // Ignorar erros silenciosamente durante o polling
+      }
+    }, 30000) // 30 segundos
+
+    return () => clearInterval(interval)
+  }, [deleting, products])
+
   async function fetchProducts() {
     setLoading(true)
     setError('')

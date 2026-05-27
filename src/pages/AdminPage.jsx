@@ -25,32 +25,33 @@ export default function AdminPage() {
   const form = useProductForm(nextId, nextOrder, editProduct)
   const publishHook = usePublish()
 
-  useEffect(() => {
-    async function fetchNextIds() {
-      try {
-        const { content } = await getProductsFile()
-        const allIds = []
-        const allOrders = []
-        const idRegex = /^\s+id:\s*(\d+)\s*,/gm
-        const orderRegex = /^\s+order:\s*(\d+)\s*,/gm
-        let m
-        while ((m = idRegex.exec(content)) !== null) {
-          allIds.push(parseInt(m[1]))
-        }
-        while ((m = orderRegex.exec(content)) !== null) {
-          allOrders.push(parseInt(m[1]))
-        }
-        const maxId = allIds.length > 0 ? Math.max(...allIds) : 0
-        const maxOrder = allOrders.length > 0 ? Math.max(...allOrders) : 0
-        setNextId(maxId + 1)
-        setNextOrder(maxOrder + 1)
-      } catch (err) {
-        setNextId(100)
-        setNextOrder(100)
-      } finally {
-        setLoadingIds(false)
+  async function fetchNextIds() {
+    try {
+      const { content } = await getProductsFile()
+      const allIds = []
+      const allOrders = []
+      const idRegex = /^\s+id:\s*(\d+)\s*,/gm
+      const orderRegex = /^\s+order:\s*(\d+)\s*,/gm
+      let m
+      while ((m = idRegex.exec(content)) !== null) {
+        allIds.push(parseInt(m[1]))
       }
+      while ((m = orderRegex.exec(content)) !== null) {
+        allOrders.push(parseInt(m[1]))
+      }
+      const maxId = allIds.length > 0 ? Math.max(...allIds) : 0
+      const maxOrder = allOrders.length > 0 ? Math.max(...allOrders) : 0
+      setNextId(maxId + 1)
+      setNextOrder(maxOrder + 1)
+    } catch (err) {
+      setNextId(100)
+      setNextOrder(100)
+    } finally {
+      setLoadingIds(false)
     }
+  }
+
+  useEffect(() => {
     fetchNextIds()
   }, [])
 
@@ -68,8 +69,11 @@ export default function AdminPage() {
     }
   }
 
-  function handleNewProduct() {
-    navigate('/admin/products')
+  async function handleNewProduct() {
+    setLoadingIds(true)
+    await fetchNextIds()
+    form.resetForm()
+    setImageBlob(null)
   }
 
   const modeTitle = isEditMode ? 'Editar produto' : 'Novo produto'

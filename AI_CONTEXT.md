@@ -52,22 +52,26 @@ URL de imagens: `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}${p
 - Título dinâmico: `"Editar produto"` vs `"Novo produto"`
 - Botão "Voltar" (↖ 0.75rem padding, acima do StepIndicator): navega para `/admin/products`
 - `handlePublish`: chama `update()` em edição, `publish()` em criação
-- Após sucesso: navega para `/admin/products`
+- `fetchNextIds()` chamada: (1) no mount, (2) após publicação bem-sucedida — garante IDs corretos em criações sequenciais
+- `handleNewProduct` (clique em "Adicionar outro produto" no Step5): recarrega IDs, reseta formulário + imageBlob, volta para Step 0
 - `nextId`/`nextOrder`: regex `/^\s+id:\s*(\d+)\s*,/gm` no products.js (max + 1, fallback 100)
 
 ## ProductsPage.jsx
 - Mount: `getProductsFile()` → `parseProducts()` → ordena por `order` desc
+- **Polling automático**: `setInterval` a cada 30s refaz fetch silenciosamente; pausa se `deleting !== null`
 - Filtros: busca por `name`/`shortName`; categoria (pills, seleção única)
 - Card: thumbnail 52px, nome, preço, categoria, badges, Editar + lixeira
 - **Editar**: `navigate('/admin', { state: { editProduct: product } })`
 - **Excluir**: `window.confirm()` → `removeProductFromFile()` → `putProductsFile()` → refetch
 
 ## Fluxos
-**Criar:** ProductsPage → `/admin` (sem state) → 5 steps → `publish()` → `/admin/products`
+**Criar:** ProductsPage → `/admin` (sem state) → 5 steps → `publish()` → Step5 sucesso ("Adicionar outro" reseta na mesma página, "Voltar" → `/admin/products`)
 
-**Editar:** ProductsPage → `/admin` (com `state.editProduct`) → 5 steps → `update()` → `/admin/products`
+**Editar:** ProductsPage → `/admin` (com `state.editProduct`) → 5 steps → `update()` → Step5 sucesso → "Voltar" → `/admin/products`
 
 **Excluir:** ProductsPage → confirm → `removeProductFromFile()` → `putProductsFile()` → refetch
+
+**Criar sequencial (sem sair da página):** Step5 "Adicionar outro" → `fetchNextIds()` (refresca IDs) → reseta formulário → volta Step 0
 
 ## Step3Photo (edição)
 - `fields.image` normalizado para filename; preview do GitHub exibido
