@@ -230,9 +230,14 @@ export default function ProductsPage() {
               <li key={product.id} className={styles.item}>
                 <img
                   className={styles.thumb}
-                  src={`https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}${product.image}`}
+                  src={`https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}/public${product.image}?t=${Date.now()}`}
                   alt={product.name}
                   loading="lazy"
+                  onError={(e) => {
+                    console.error(`Erro ao carregar imagem: ${e.target.src}`)
+                    console.error(`OWNER: ${OWNER}, REPO: ${REPO}, BRANCH: ${BRANCH}`)
+                    e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"%3E%3Crect fill="%23f0f0f0" width="100" height="100"/%3E%3Ctext x="50" y="50" text-anchor="middle" dy=".3em" font-size="12" fill="%23999"%3E?%3C/text%3E%3C/svg%3E'
+                  }}
                 />
                 <div className={styles.info}>
                   <p className={styles.name}>{product.name}</p>

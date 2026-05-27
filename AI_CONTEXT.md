@@ -42,7 +42,7 @@ Campos: `id, name, shortName, subtitle, description, bullets, category[], order,
 
 **Com variantes** (`hasVariants: true`): `price: ''`, `buyLink: ''`, `prices[{size, price}]`, `buyLinks[{size, link}]`, `variants` (estado interno do painel)
 
-URL de imagens: `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}${product.image}`
+URL de imagens: `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}/public${product.image}`
 
 ## Hooks principais
 - `useProductForm(nextId, nextOrder, initialData=null)` — estado do formulário (criação ou edição)
@@ -61,6 +61,7 @@ URL de imagens: `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}${p
 ## ProductsPage.jsx
 - Mount: `getProductsFile()` → `parseProducts()` + `parseCategories()` → ordena produtos por `order` desc
 - **Polling automático**: `setInterval` a cada 30s refaz fetch silenciosamente; pausa se `deleting !== null`; atualiza `categories` se mudarem
+- **Imagens**: URL `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}/public${product.image}?t=${Date.now()}` com cache-busting; `onError` mostra placeholder e loga erro + variáveis de ambiente para debug
 - Filtros: busca por `name`/`shortName`; categoria (pills, seleção única) — categorias vindas do estado dinâmico
 - Card: thumbnail 52px, nome, preço, categoria, badges, Editar + lixeira
 - **Editar**: `navigate('/admin', { state: { editProduct: product } })`
