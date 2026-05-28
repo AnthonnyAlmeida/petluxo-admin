@@ -24,7 +24,7 @@ src/
   steps/   Step1Basics, Step2Description, Step3Photo, Step4Review, Step5Publish
   components/ Field, StepIndicator, ProductPreview, PublishStatus
   hooks/   useProductForm, usePublish
-  lib/     github.js, imageConverter.js, formatPrice.js, ai.js, promptGenerator.js
+  lib/     github.js, imageConverter.js, formatPrice.js, ai.js, promptGenerator.js, categoryOrderUtils.js
   data/    productTemplate.js
   styles/  variables.css, globals.css
 ```
@@ -37,13 +37,20 @@ src/
 5. Categorias não são hardcoded: `parseCategories()` em `github.js` extrai `CATEGORIES` do mesmo `products.js` do repo petluxo
 
 ## Modelo de produto
-Campos: `id, name, shortName, subtitle, description, bullets, category[], order, image, badge, tags, originalPrice`
+Campos: `id, name, shortName, subtitle, description, bullets, category[], order, categoryOrder{}, image, badge, tags, originalPrice`
 
 **Simples** (`hasVariants: false`): `price`, `buyLink`, `variants: []`
 
 **Com variantes** (`hasVariants: true`): `price: ''`, `buyLink: ''`, `prices[{size, price}]`, `buyLinks[{size, link}]`, `variants` (estado interno do painel)
 
 URL de imagens: `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}/public${product.image}`
+
+## categoryOrderUtils.js — funções exportadas
+- `getCategoryOrder(product, categoryId)` → valor numérico do `categoryOrder[categoryId]` ou `0`
+- `getMaxCategoryOrder(products, categoryId)` → maior valor entre todos os produtos para a categoria
+- `generateNextCategoryOrder(products, categoryId)` → `max + 100` (próximo slot livre)
+- `setCategoryOrder(product, categoryId, value)` → novo objeto produto com o campo atualizado
+- `normalizeCategoryOrder(product, allProducts)` → adiciona entradas faltantes (com `generateNextCategoryOrder`), remove entradas de categorias que o produto não pertence mais, mantém valores existentes
 
 ## github.js — funções exportadas
 - `getProductsFile()` → `{ content, sha }`; usa `cache: 'no-store'` para forçar fetch sem cache do browser (evita SHA stale quando duas operações ocorrem dentro de 60s — janela do `Cache-Control: private, max-age=60` da API do GitHub); `commitFile(path, content, message, sha?)` — recebe conteúdo bruto inteiro
@@ -54,8 +61,8 @@ URL de imagens: `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}/pu
 - `replaceProductInFile(content, product)` → substitui bloco de um produto pelo ID usando `productToJS()` interno
 
 ## Hooks principais
-- `useProductForm(nextId, nextOrder, initialData=null)` — estado do formulário; expõe `applyAIData(data)`
-- `usePublish()` — orquestração: `publish()`, `update()`, `reset()`; contém cópias internas de `productToJS`/`replaceProductInFile` independentes das de `github.js`
+- `useProductForm(nextId, nextOrder, initialData=null)` — estado do formulário; expõe `applyAIData(data)` e `updateCategory(categoryId)` (async: toggle da categoria + fetch de allProducts + `normalizeCategoryOrder` + atualiza `fields.category` e `fields.categoryOrder` juntos)
+- `usePublish()` — orquestração: `publish()`, `update()`, `reset()`; contém cópias internas de `productToJS`/`replaceProductInFile` independentes das de `github.js`; ambos `publish()` e `update()` chamam `normalizeCategoryOrder` antes de montar o objeto produto, garantindo que `categoryOrder` reflita exatamente as categorias selecionadas no momento do commit
 
 ## Integração com IA
 - `src/lib/ai.js` — `fillProductWithAI(prompt)`: chama Anthropic `claude-haiku-4-5-20251001`; requer `VITE_CLAUDE_API_KEY`
@@ -74,13 +81,15 @@ URL de imagens: `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}/pu
 - **Excluir**: confirm → `removeProductFromFile()` (manipulação de string) → `putProductsFile()`
 
 ## CategoriesPage.jsx
-- Botão "← Voltar" → `/admin/products`; lista com label, ID chip (monospace), contagem de produtos
-- Mount: `getProductsFile()` → `parseCategories()` + `parseProducts()` — sem polling (só uma pessoa usa o painel; categorias não são alteradas externamente)
-- Cada item: botões Ordenar (`console.log` — placeholder Prompt 3), editar (ícone lápis), excluir (ícone lixeira, danger no hover)
-- **Modal criar**: Nome + ID readonly auto-gerado por `labelToId()` (lowercase, normalize NFD, sem acentos, espaços→hífens); valida ID único com erro "Já existe uma categoria com esse ID. Escolha outro nome."; após commit → atualiza `setCategories()` → fecha modal (sem delay, sem fetchData)
-- **Modal editar**: ID readonly; só atualiza label; após commit → atualiza `setCategories()` → fecha modal (sem delay, sem fetchData)
-- **Excluir**: confirm → `replaceCategoriesInFile` + `replaceProductInFile` por produto afetado → um único `commitFile` → atualiza `setCategories()` (sem delay, sem fetchData)
-- Estado local atualiza imediatamente; polling 5s sincroniza com GitHub periodicamente
+- Mount: `getProductsFile()` → `parseCategories()` + `parseProducts()` — sem polling
+- **Lista**: label, ID chip, contagem de produtos; botões Ordenar / editar / excluir por item
+- **Modal criar**: Nome + ID auto-gerado por `labelToId()` (lowercase, normalize NFD, sem acentos, espaços→hífens); valida ID único; commit → `setCategories()` otimista → fecha modal
+- **Modal editar**: ID readonly; só atualiza label; mesmo fluxo de commit otimista
+- **Excluir**: confirm → `replaceCategoriesInFile` + `replaceProductInFile` por produto afetado → um `commitFile` → `setCategories()` otimista
+- **Abrir ordenação** (`handleStartOrdering`): async — `getProductsFile()` fresco, `parseProducts()`, filtra e ordena DESC por `getCategoryOrder(p, cat.id)` (produtos sem entrada ficam em 0, no final); `saving=true` durante fetch; erro mostrado na tela de lista
+- **Tela de ordenação** (`orderingCategory !== null`): substitui a lista; thumbnail 40px, nome e setas ↑↓; setas desabilitadas (opacity 0.3) nas extremidades; movimentação só local; botões "Cancelar" e "Salvar ordem" (verde `--color-success`)
+- **Salvar ordem**: `getProductsFile()` + `parseProducts()` frescos → `maxOrder = getMaxCategoryOrder(allProducts, orderingCategory.id)` → para cada posição `i`, `newValue = maxOrder + (length - i) * 100` → só atualiza se `getCategoryOrder(product, categoryId) !== newValue` → monta `updatedProduct` com `categoryOrder[categoryId] = newValue` (spread preserva outras categorias) → `replaceProductInFile` por produto alterado → um `commitFile` → `setProducts()` otimista → `setOrderingCategory(null)`
+- Thumbnail URL: `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}/public${product.image}` (constantes de env no topo do arquivo)
 
 ## Fluxos
 **Criar produto:** ProductsPage → `/admin` → 5 steps → `publish()` → Step5

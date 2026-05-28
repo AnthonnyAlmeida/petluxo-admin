@@ -2,15 +2,7 @@ import Field from '../components/Field'
 import { formatPrice } from '../lib/formatPrice'
 import styles from './Step1Basics.module.css'
 
-export default function Step1Basics({ fields, setField, errors, onNext, addVariant, updateVariant, removeVariant, categories = [] }) {
-  function toggleCategory(id) {
-    const current = fields.category
-    const updated = current.includes(id)
-      ? current.filter(c => c !== id)
-      : [...current, id]
-    setField('category', updated)
-  }
-
+export default function Step1Basics({ fields, setField, errors, onNext, addVariant, updateVariant, removeVariant, updateCategory, categories = [] }) {
   function handlePriceBlur() {
     setField('price', formatPrice(fields.price))
   }
@@ -157,7 +149,7 @@ export default function Step1Basics({ fields, setField, errors, onNext, addVaria
                 styles.catBtn,
                 fields.category.includes(cat.id) ? styles.catBtnActive : '',
               ].filter(Boolean).join(' ')}
-              onClick={() => toggleCategory(cat.id)}
+              onClick={() => updateCategory(cat.id)}
             >
               {cat.label}
             </button>

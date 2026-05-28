@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { createProductTemplate } from '../data/productTemplate'
+import { getProductsFile, parseProducts } from '../lib/github'
+import { normalizeCategoryOrder } from '../lib/categoryOrderUtils'
 
 const TOTAL_STEPS = 5
 
@@ -81,6 +83,24 @@ export function useProductForm(nextId, nextOrder, initialData = null) {
     setFields(prev => ({ ...prev, ...data }))
   }
 
+  async function updateCategory(categoryId) {
+    const newCategory = fields.category.includes(categoryId)
+      ? fields.category.filter(id => id !== categoryId)
+      : [...fields.category, categoryId]
+    const { content } = await getProductsFile()
+    const allProducts = parseProducts(content)
+    const normalized = normalizeCategoryOrder(
+      { category: newCategory, categoryOrder: fields.categoryOrder || {} },
+      allProducts
+    )
+    setFields(prev => ({
+      ...prev,
+      category: normalized.category,
+      categoryOrder: normalized.categoryOrder,
+    }))
+    setErrors(prev => ({ ...prev, category: '' }))
+  }
+
   return {
     fields,
     setField,
@@ -94,5 +114,6 @@ export function useProductForm(nextId, nextOrder, initialData = null) {
     addVariant,
     updateVariant,
     removeVariant,
+    updateCategory,
   }
 }

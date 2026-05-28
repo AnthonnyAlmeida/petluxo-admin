@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { getProductsFile, commitProducts, commitFile, commitImage } from '../lib/github'
+import { getProductsFile, commitProducts, commitFile, commitImage, parseProducts } from '../lib/github'
 import { blobToBase64 } from '../lib/imageConverter'
+import { normalizeCategoryOrder } from '../lib/categoryOrderUtils'
 
 export function usePublish() {
   const [status, setStatus] = useState('idle')
@@ -27,6 +28,11 @@ export function usePublish() {
 
       updateStep('products', { state: 'active' })
       const { content, sha } = await getProductsFile()
+      const allProducts = parseProducts(content)
+      const { categoryOrder } = normalizeCategoryOrder(
+        { category: fields.category, categoryOrder: fields.categoryOrder || {} },
+        allProducts
+      )
 
       const newProduct = {
         id: fields.id,
@@ -42,6 +48,7 @@ export function usePublish() {
         originalPrice: fields.originalPrice || undefined,
         category: fields.category,
         order: fields.order,
+        categoryOrder,
         image: `/images/products/${fields.image}`,
         badge: fields.badge || undefined,
         ...(fields.hasVariants
@@ -145,6 +152,11 @@ export function usePublish() {
 
       updateStep('products', { state: 'active' })
       const { content, sha } = await getProductsFile()
+      const allProducts = parseProducts(content)
+      const { categoryOrder } = normalizeCategoryOrder(
+        { category: fields.category, categoryOrder: fields.categoryOrder || {} },
+        allProducts
+      )
 
       const updatedProduct = {
         id: fields.id,
@@ -160,6 +172,7 @@ export function usePublish() {
         originalPrice: fields.originalPrice || undefined,
         category: fields.category,
         order: fields.order,
+        categoryOrder,
         image: `/images/products/${fields.image}`,
         badge: fields.badge || undefined,
         ...(fields.hasVariants

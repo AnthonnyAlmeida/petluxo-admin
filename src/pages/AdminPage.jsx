@@ -185,6 +185,7 @@ export default function AdminPage() {
             addVariant={form.addVariant}
             updateVariant={form.updateVariant}
             removeVariant={form.removeVariant}
+            updateCategory={form.updateCategory}
             categories={categories}
           />
         )}

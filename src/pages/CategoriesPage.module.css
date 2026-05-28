@@ -430,6 +430,137 @@
   opacity: 0.85;
 }
 
+/* ── Ordenação ── */
+.orderHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.orderHeaderLabel {
+  font-size: 0.6875rem;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin: 0 0 0.2rem;
+}
+
+.orderHeaderTitle {
+  font-family: var(--font-serif);
+  font-size: 1.375rem;
+  font-weight: 600;
+  color: var(--color-dark);
+  margin: 0;
+}
+
+.orderHeaderActions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.btnSaveOrder {
+  padding: 0.5625rem 1.125rem;
+  background: var(--color-success);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: opacity var(--transition);
+  white-space: nowrap;
+}
+
+.btnSaveOrder:hover:not(:disabled) {
+  opacity: 0.85;
+}
+
+.btnSaveOrder:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.orderList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border: 0.5px solid #e8ddd0;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.orderItem {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 0.5px solid #f0e8dc;
+}
+
+.orderItem:last-child {
+  border-bottom: none;
+}
+
+.orderThumb {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  flex-shrink: 0;
+  background: var(--color-cream-dark);
+}
+
+.orderName {
+  flex: 1;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-dark);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.orderArrows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.btnArrow {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 0.5px solid #e0d5c5;
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  color: var(--color-muted);
+  cursor: pointer;
+  transition: all var(--transition);
+  line-height: 1;
+}
+
+.btnArrow:hover:not(:disabled) {
+  border-color: var(--color-gold);
+  color: var(--color-dark);
+}
+
+.btnArrow:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
 .btnSave:disabled {
   opacity: 0.45;
   cursor: not-allowed;
