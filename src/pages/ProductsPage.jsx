@@ -67,7 +67,7 @@ export default function ProductsPage() {
     fetchProducts()
   }, [])
 
-  // Polling automático a cada 30 segundos
+  // Polling automático a cada 5 segundos
   useEffect(() => {
     const interval = setInterval(async () => {
       // Não fazer polling se está deletando
@@ -88,7 +88,7 @@ export default function ProductsPage() {
       } catch (err) {
         // Ignorar erros silenciosamente durante o polling
       }
-    }, 30000) // 30 segundos
+    }, 5000) // 5 segundos
 
     return () => clearInterval(interval)
   }, [deleting, products])
@@ -148,6 +148,9 @@ export default function ProductsPage() {
         <span className={styles.headerLogo}>✦ PetLuxo</span>
         <div className={styles.headerRight}>
           <span className={styles.headerLabel}>Admin</span>
+          <button className={styles.btnCategories} onClick={() => navigate('/admin/categories')}>
+            Categorias
+          </button>
           <button className={styles.btnLogout} onClick={handleLogout}>SAIR</button>
         </div>
       </header>

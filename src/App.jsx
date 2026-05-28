@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import LoginPage from './pages/LoginPage'
 import AdminPage from './pages/AdminPage'
 import ProductsPage from './pages/ProductsPage'
+import CategoriesPage from './pages/CategoriesPage'
 
 function PrivateRoute({ children }) {
   const isAuth = sessionStorage.getItem('petluxo-admin-auth') === 'true'
@@ -26,6 +27,14 @@ export default function App() {
           element={
             <PrivateRoute>
               <ProductsPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/admin/categories"
+          element={
+            <PrivateRoute>
+              <CategoriesPage />
             </PrivateRoute>
           }
         />

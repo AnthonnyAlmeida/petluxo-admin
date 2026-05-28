@@ -16,7 +16,7 @@ function headers() {
 export async function getProductsFile() {
   const res = await fetch(
     `${BASE}/repos/${OWNER}/${REPO}/contents/src/data/products.js?ref=${BRANCH}`,
-    { headers: headers() }
+    { headers: headers(), cache: 'no-store' }
   )
   if (!res.ok) throw new Error(`GitHub GET falhou: ${res.status}`)
   const data = await res.json()
@@ -106,4 +106,76 @@ export async function commitImage(filename, base64Content) {
     throw new Error(`GitHub image commit falhou: ${err.message}`)
   }
   return res.json()
+}
+
+export function serializeCategories(categories) {
+  const items = categories.map(c => {
+    const id = c.id.replace(/\\/g, '\\\\').replace(/'/g, "\\'")
+    const label = c.label.replace(/\\/g, '\\\\').replace(/'/g, "\\'")
+    return `  { id: '${id}', label: '${label}' }`
+  })
+  return `export const CATEGORIES = [\n${items.join(',\n')},\n]`
+}
+
+export function replaceCategoriesInFile(content, categories) {
+  const startIdx = content.indexOf('export const CATEGORIES')
+  const endIdx = content.indexOf(']', startIdx) + 1
+  const serialized = serializeCategories(categories)
+  return content.slice(0, startIdx) + serialized + content.slice(endIdx)
+}
+
+function productToJS(product) {
+  const lines = ['  {']
+  for (const [key, value] of Object.entries(product)) {
+    if (value === null || value === undefined) {
+      lines.push(`    ${key}: null,`)
+    } else if (typeof value === 'string') {
+      const escaped = value.replace(/\\/g, '\\\\').replace(/'/g, "\\'")
+      lines.push(`    ${key}: '${escaped}',`)
+    } else if (typeof value === 'number') {
+      lines.push(`    ${key}: ${value},`)
+    } else if (Array.isArray(value)) {
+      if (value.length === 0) {
+        lines.push(`    ${key}: [],`)
+      } else if (value.every(v => typeof v === 'string')) {
+        const items = value.map(v => `'${v.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`).join(', ')
+        lines.push(`    ${key}: [${items}],`)
+      } else if (value.every(v => typeof v === 'object' && v !== null && !Array.isArray(v))) {
+        const items = value.map(obj => {
+          const pairs = Object.entries(obj).map(([k, val]) => {
+            if (typeof val === 'string') {
+              const escaped = val.replace(/\\/g, '\\\\').replace(/'/g, "\\'")
+              return `${k}: '${escaped}'`
+            }
+            return `${k}: ${JSON.stringify(val)}`
+          }).join(', ')
+          return `{ ${pairs} }`
+        }).join(', ')
+        lines.push(`    ${key}: [${items}],`)
+      } else {
+        const json = JSON.stringify(value, null, 2)
+          .split('\n')
+          .map((l, i) => i === 0 ? `    ${key}: ${l}` : `    ${l}`)
+          .join('\n')
+        lines.push(json + ',')
+      }
+    } else {
+      lines.push(`    ${key}: ${JSON.stringify(value)},`)
+    }
+  }
+  lines.push('  }')
+  return lines.join('\n')
+}
+
+export function replaceProductInFile(content, product) {
+  const idPattern = `\n    id: ${product.id},`
+  const idIndex = content.indexOf(idPattern)
+  if (idIndex === -1) throw new Error(`Produto id=${product.id} não encontrado no catálogo`)
+  const blockStart = content.lastIndexOf('\n  {', idIndex)
+  if (blockStart === -1) throw new Error(`Bloco do produto id=${product.id} inválido`)
+  const blockEnd = content.indexOf('\n  }', blockStart + 3)
+  if (blockEnd === -1) throw new Error(`Fim do bloco do produto id=${product.id} não encontrado`)
+  const before = content.slice(0, blockStart)
+  const after = content.slice(blockEnd + 4)
+  return before + '\n' + productToJS(product) + after
 }
