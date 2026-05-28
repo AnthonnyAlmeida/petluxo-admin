@@ -149,7 +149,7 @@ export default function Step1Basics({ fields, setField, errors, onNext, addVaria
       <div>
         <p className={styles.sectionLabel}>Categorias</p>
         <div className={styles.categories}>
-          {CATEGORIES.map(cat => (
+          {categories.map(cat => (
             <button
               key={cat.id}
               type="button"

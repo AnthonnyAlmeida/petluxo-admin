@@ -23,7 +23,7 @@ src/
   steps/   Step1Basics, Step2Description, Step3Photo, Step4Review, Step5Publish
   components/ Field, StepIndicator, ProductPreview, PublishStatus
   hooks/   useProductForm, usePublish
-  lib/     github.js, imageConverter.js, formatPrice.js
+  lib/     github.js, imageConverter.js, formatPrice.js, ai.js, promptGenerator.js
   data/    productTemplate.js
   styles/  variables.css, globals.css
 ```
@@ -45,18 +45,25 @@ Campos: `id, name, shortName, subtitle, description, bullets, category[], order,
 URL de imagens: `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}/public${product.image}`
 
 ## Hooks principais
-- `useProductForm(nextId, nextOrder, initialData=null)` — estado do formulário (criação ou edição)
+- `useProductForm(nextId, nextOrder, initialData=null)` — estado do formulário (criação ou edição); expõe `applyAIData(data)` para preenchimento em lote via IA
 - `usePublish()` — orquestração de publicação: `publish()`, `update()`, `reset()`
+
+## Integração com IA
+- `src/lib/ai.js` — `fillProductWithAI(prompt)`: chama `POST /v1/messages` da Anthropic com `claude-haiku-4-5-20251001`, extrai JSON da resposta; requer `VITE_CLAUDE_API_KEY` no `.env.local`
+- `src/lib/promptGenerator.js` — `generateAIFillPrompt(rawText, categories)`: monta prompt instruindo Claude a retornar JSON com `name, shortName, subtitle, description, bullets, tags, badge, category, hasVariants, variants`; injeta lista de IDs válidos de categorias; tom sofisticado/premium, sem emojis
+- `useProductForm` expõe `applyAIData(data)` → `setFields(prev => ({ ...prev, ...data }))` — preenche múltiplos campos de uma vez sem apagar `id`, `order`, `image`
+- `.env.local` deve conter: `VITE_CLAUDE_API_KEY`
 
 ## AdminPage.jsx
 - Lê `location.state?.editProduct` via `useLocation()`; se existe, é modo edição
 - Título dinâmico: `"Editar produto"` vs `"Novo produto"`
 - Botão "Voltar" (↖ 0.75rem padding, acima do StepIndicator): navega para `/admin/products`
 - `handlePublish`: chama `update()` em edição, `publish()` em criação
-- `fetchNextIds()` chamada: (1) no mount, (2) após publicação bem-sucedida — garante IDs corretos em criações sequenciais; também chama `parseCategories()` e armazena em estado `categories`
+- `fetchNextIds()` chamada: (1) no mount, (2) após publicação bem-sucedida; também chama `parseCategories()` e armazena em estado `categories`
 - `handleNewProduct` (clique em "Adicionar outro produto" no Step5): recarrega IDs, reseta formulário + imageBlob, volta para Step 0
 - `nextId`/`nextOrder`: regex `/^\s+id:\s*(\d+)\s*,/gm` no products.js (max + 1, fallback 100)
 - `categories` passado como prop para `Step1Basics`
+- **Bloco Anthonny AI** (Step 0, modo criação apenas): textarea para texto bruto + botão "✨ Preencher com Anthonny AI"; estados `aiText`, `aiLoading`, `aiError`, `aiOpen` (inicia `true`), `aiFilled`; `handleAIFill` valida IDs de categoria antes de chamar `form.applyAIData(data)`; após sucesso colapsa e exibe link "✦ Preencher novamente com IA"; em modo edição nunca aparece
 
 ## ProductsPage.jsx
 - Mount: `getProductsFile()` → `parseProducts()` + `parseCategories()` → ordena produtos por `order` desc

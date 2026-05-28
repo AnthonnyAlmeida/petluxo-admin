@@ -101,6 +101,94 @@
   color: var(--color-dark);
 }
 
+.aiBlock {
+  margin: 0 1.25rem 0.25rem;
+  padding: 1rem;
+  background: var(--color-cream);
+  border: 0.5px solid #e8ddd0;
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.aiLabel {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--color-gold-dark);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.aiTextarea {
+  width: 100%;
+  border: 0.5px solid #ddd0c0;
+  border-radius: var(--radius-sm);
+  padding: 0.625rem 0.75rem;
+  font-size: 0.8125rem;
+  color: var(--color-dark);
+  background: #fff;
+  resize: vertical;
+  min-height: 90px;
+  line-height: 1.5;
+  transition: border-color var(--transition);
+}
+
+.aiTextarea:focus {
+  outline: none;
+  border-color: var(--color-gold);
+}
+
+.aiTextarea:disabled {
+  opacity: 0.55;
+}
+
+.aiBtn {
+  align-self: flex-start;
+  background: var(--color-gold);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  letter-spacing: 0.03em;
+  transition: background var(--transition), opacity var(--transition);
+}
+
+.aiBtn:hover:not(:disabled) {
+  background: var(--color-gold-dark);
+}
+
+.aiBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.aiError {
+  font-size: 0.75rem;
+  color: var(--color-error);
+}
+
+.aiRefillRow {
+  padding: 0 1.25rem 0.25rem;
+}
+
+.aiRefill {
+  background: none;
+  border: none;
+  font-size: 0.75rem;
+  color: var(--color-gold-dark);
+  text-decoration: underline;
+  padding: 0;
+  opacity: 0.75;
+  transition: opacity var(--transition);
+}
+
+.aiRefill:hover {
+  opacity: 1;
+}
+
 @media (max-width: 520px) {
   .card {
     margin: 0;

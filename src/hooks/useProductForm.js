@@ -77,9 +77,14 @@ export function useProductForm(nextId, nextOrder, initialData = null) {
     setCurrentStep(0)
   }
 
+  function applyAIData(data) {
+    setFields(prev => ({ ...prev, ...data }))
+  }
+
   return {
     fields,
     setField,
+    applyAIData,
     errors,
     currentStep,
     nextStep,

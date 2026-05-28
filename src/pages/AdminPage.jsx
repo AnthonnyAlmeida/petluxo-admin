@@ -3,6 +3,8 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { useProductForm } from '../hooks/useProductForm'
 import { usePublish } from '../hooks/usePublish'
 import { getProductsFile, parseCategories } from '../lib/github'
+import { fillProductWithAI } from '../lib/ai'
+import { generateAIFillPrompt } from '../lib/promptGenerator'
 import StepIndicator from '../components/StepIndicator'
 import Step1Basics from '../steps/Step1Basics'
 import Step2Description from '../steps/Step2Description'
@@ -22,6 +24,12 @@ export default function AdminPage() {
   const [categories, setCategories] = useState([])
   const [imageBlob, setImageBlob] = useState(null)
   const [loadingIds, setLoadingIds] = useState(true)
+
+  const [aiText, setAiText] = useState('')
+  const [aiLoading, setAiLoading] = useState(false)
+  const [aiError, setAiError] = useState('')
+  const [aiOpen, setAiOpen] = useState(!isEditMode)
+  const [aiFilled, setAiFilled] = useState(false)
 
   const form = useProductForm(nextId, nextOrder, editProduct)
   const publishHook = usePublish()
@@ -78,6 +86,27 @@ export default function AdminPage() {
     setImageBlob(null)
   }
 
+  async function handleAIFill() {
+    setAiLoading(true)
+    setAiError('')
+    try {
+      const prompt = generateAIFillPrompt(aiText, categories)
+      const data = await fillProductWithAI(prompt)
+      const validIds = new Set(categories.map(c => c.id))
+      if (Array.isArray(data.category)) {
+        data.category = data.category.filter(id => validIds.has(id))
+      }
+      form.applyAIData(data)
+      setAiText('')
+      setAiOpen(false)
+      setAiFilled(true)
+    } catch {
+      setAiError('Não foi possível preencher. Tente novamente.')
+    } finally {
+      setAiLoading(false)
+    }
+  }
+
   const modeTitle = isEditMode ? 'Editar produto' : 'Novo produto'
   const stepTitles = [
     { title: modeTitle, subtitle: 'Informações básicas' },
@@ -112,6 +141,36 @@ export default function AdminPage() {
             ← Voltar
           </button>
         </div>
+
+        {form.currentStep === 0 && !isEditMode && (
+          aiOpen ? (
+            <div className={styles.aiBlock}>
+              <p className={styles.aiLabel}>✨ Anthonny AI</p>
+              <textarea
+                className={styles.aiTextarea}
+                placeholder="Cole aqui o texto bruto do produto (nome, descrição, características, tamanhos...)&#10;A IA vai adaptar para o tom PetLuxo automaticamente."
+                value={aiText}
+                onChange={e => setAiText(e.target.value)}
+                rows={5}
+                disabled={aiLoading}
+              />
+              {aiError && <p className={styles.aiError}>{aiError}</p>}
+              <button
+                className={styles.aiBtn}
+                onClick={handleAIFill}
+                disabled={aiLoading || !aiText.trim()}
+              >
+                {aiLoading ? 'Anthonny AI pensando...' : '✨ Preencher com Anthonny AI'}
+              </button>
+            </div>
+          ) : aiFilled && (
+            <div className={styles.aiRefillRow}>
+              <button className={styles.aiRefill} onClick={() => setAiOpen(true)}>
+                ✦ Preencher novamente com IA
+              </button>
+            </div>
+          )
+        )}
 
         {form.currentStep < 4 && (
           <StepIndicator currentStep={form.currentStep} total={5} />
