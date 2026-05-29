@@ -7,8 +7,14 @@ Painel administrativo React para gestão de produtos e categorias da PetLuxo. Us
 - React 18 + Vite, react-router-dom, CSS Modules
 - GitHub Contents API para leitura/escrita de `products.js` e imagens — via Edge Functions (`/api/github`)
 - Canvas API para conversão de imagens em WebP
-- Variáveis de servidor (sem prefixo `VITE_`, não entram no bundle): `ADMIN_PASSWORD`, `GITHUB_TOKEN`, `GITHUB_BRANCH`, `CLAUDE_API_KEY`
-- Variáveis de cliente (prefixo `VITE_`, usadas para URLs de thumbnail): `VITE_GITHUB_OWNER`, `VITE_GITHUB_REPO`, `VITE_GITHUB_BRANCH` — não são segredos (repo público)
+- Variáveis de servidor (sem prefixo `VITE_`, usadas pelas Edge Functions): `ADMIN_PASSWORD`, `GITHUB_TOKEN`, `GITHUB_OWNER`, `GITHUB_REPO`, `GITHUB_BRANCH`, `CLAUDE_API_KEY`
+- Variáveis de cliente (prefixo `VITE_`, expostas no bundle para URLs de thumbnail): `VITE_GITHUB_OWNER`, `VITE_GITHUB_REPO`, `VITE_GITHUB_BRANCH` — não são segredos (repo público)
+
+## Desenvolvimento local
+- Usar `vercel dev` (não `npm run dev`) — necessário para que as Edge Functions em `api/` funcionem localmente
+- Vercel CLI já instalado globalmente; `vercel.json` na raiz configura framework Vite
+- `.env` na raiz deve conter **todas** as variáveis: as de servidor sem prefixo (`GITHUB_OWNER`, `GITHUB_REPO`, `GITHUB_BRANCH`, `GITHUB_TOKEN`, `ADMIN_PASSWORD`, `CLAUDE_API_KEY`) **e** as de cliente com prefixo (`VITE_GITHUB_OWNER`, `VITE_GITHUB_REPO`, `VITE_GITHUB_BRANCH`)
+- Referência de variáveis: `.env.example` na raiz do projeto
 
 ## Rotas (App.jsx)
 - `/login` → LoginPage
@@ -93,9 +99,11 @@ URL de imagens: `https://raw.githubusercontent.com/${VITE_GITHUB_OWNER}/${VITE_G
 - **Modal criar**: Nome + ID auto-gerado por `labelToId()` (lowercase, normalize NFD, sem acentos, espaços→hífens); valida ID único; commit → `setCategories()` otimista → fecha modal
 - **Modal editar**: ID readonly; só atualiza label; mesmo fluxo de commit otimista
 - **Excluir**: confirm → `replaceCategoriesInFile` + `replaceProductInFile` por produto afetado → um `commitFile` → `setCategories()` otimista
-- **Abrir ordenação** (`handleStartOrdering`): async — `getProductsFile()` fresco, `parseProducts()`, filtra e ordena DESC por `getCategoryOrder(p, cat.id)` (produtos sem entrada ficam em 0, no final); `saving=true` durante fetch; erro mostrado na tela de lista
-- **Tela de ordenação** (`orderingCategory !== null`): substitui a lista; thumbnail 40px, nome e setas ↑↓; setas desabilitadas (opacity 0.3) nas extremidades; movimentação só local; botões "Cancelar" e "Salvar ordem" (verde `--color-success`)
-- **Salvar ordem**: `getProductsFile()` + `parseProducts()` frescos → `maxOrder = getMaxCategoryOrder(allProducts, orderingCategory.id)` → para cada posição `i`, `newValue = maxOrder + (length - i) * 100` → só atualiza se `getCategoryOrder(product, categoryId) !== newValue` → monta `updatedProduct` com `categoryOrder[categoryId] = newValue` (spread preserva outras categorias) → `replaceProductInFile` por produto alterado → um `commitFile` → `setProducts()` otimista → `setOrderingCategory(null)`
+- **Reordenação de categorias** (`isReordering`): botão "Ordenar" na titleRow ativa modo; copia `categories` → `reorderedCategories`; setas ↑↓ por item; "Mais Vendidos" (`id === 'mais-vendidos'`) fixo no topo sem setas; botões editar/excluir ocultos; movimentação só local; titleRow mostra "Cancelar" + "Salvar ordem" em vez dos botões normais
+- **Salvar ordem de categorias**: `getProductsFile()` fresco → `replaceCategoriesInFile(content, reorderedCategories)` → `commitFile()` com mensagem `'feat: ordem de categorias atualizada via painel admin'` → `setCategories(reorderedCategories)` → `setIsReordering(false)`
+- **Abrir ordenação de produtos** (`handleStartOrdering`): async — `getProductsFile()` fresco, `parseProducts()`, filtra e ordena DESC por `getCategoryOrder(p, cat.id)`; `saving=true` durante fetch
+- **Tela de ordenação de produtos** (`orderingCategory !== null`): substitui a lista; thumbnail 40px, nome e setas ↑↓; setas desabilitadas (opacity 0.3) nas extremidades; movimentação só local; botões "Cancelar" e "Salvar ordem" (verde `--color-success`)
+- **Salvar ordem de produtos**: `getProductsFile()` + `parseProducts()` frescos → `maxOrder = getMaxCategoryOrder(...)` → `newValue = maxOrder + (length - i) * 100` → `replaceProductInFile` por produto alterado → um `commitFile` → `setProducts()` otimista → `setOrderingCategory(null)`
 - Thumbnail URL: `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}/public${product.image}` (constantes de env no topo do arquivo)
 
 ## Fluxos

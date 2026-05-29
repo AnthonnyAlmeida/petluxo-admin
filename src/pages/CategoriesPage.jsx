@@ -40,9 +40,13 @@ export default function CategoriesPage() {
   const [modalId, setModalId] = useState('')
   const [modalError, setModalError] = useState('')
 
-  // ordenação
+  // ordenação de produtos dentro de uma categoria
   const [orderingCategory, setOrderingCategory] = useState(null)
   const [orderedProducts, setOrderedProducts] = useState([])
+
+  // reordenação da lista de categorias
+  const [isReordering, setIsReordering] = useState(false)
+  const [reorderedCategories, setReorderedCategories] = useState([])
 
   useEffect(() => {
     fetchData()
@@ -165,7 +169,54 @@ export default function CategoriesPage() {
     }
   }
 
-  // ── Ordenação ──────────────────────────────────────────
+  // ── Reordenação de categorias ──────────────────────────
+
+  function handleStartReorder() {
+    setReorderedCategories([...categories])
+    setIsReordering(true)
+  }
+
+  function handleCancelReorder() {
+    setIsReordering(false)
+    setReorderedCategories([])
+  }
+
+  function handleMoveCategoryUp(index) {
+    setReorderedCategories(prev => {
+      if (index <= 0) return prev
+      const next = [...prev]
+      ;[next[index - 1], next[index]] = [next[index], next[index - 1]]
+      return next
+    })
+  }
+
+  function handleMoveCategoryDown(index) {
+    setReorderedCategories(prev => {
+      if (index >= prev.length - 1) return prev
+      const next = [...prev]
+      ;[next[index], next[index + 1]] = [next[index + 1], next[index]]
+      return next
+    })
+  }
+
+  async function handleSaveCategoryOrder() {
+    setSaving(true)
+    setError('')
+    try {
+      const { content, sha } = await getProductsFile()
+      const newContent = replaceCategoriesInFile(content, reorderedCategories)
+      await commitFile('src/data/products.js', newContent, 'feat: ordem de categorias atualizada via painel admin', sha)
+      setCategories(reorderedCategories)
+      setIsReordering(false)
+      setReorderedCategories([])
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  // ── Ordenação de produtos ──────────────────────────────
 
   async function handleStartOrdering(cat) {
     setSaving(true)
@@ -271,7 +322,7 @@ export default function CategoriesPage() {
 
       <div className={styles.content}>
 
-        {/* ── Tela de ordenação ── */}
+        {/* ── Tela de ordenação de produtos ── */}
         {orderingCategory !== null ? (
           <>
             <div className={styles.orderHeader}>
@@ -360,86 +411,162 @@ export default function CategoriesPage() {
                   </p>
                 )}
               </div>
-              <button className={styles.btnNew} onClick={openCreate} disabled={saving}>
-                <svg className={styles.btnNewIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                  <line x1="12" y1="5" x2="12" y2="19"/>
-                  <line x1="5" y1="12" x2="19" y2="12"/>
-                </svg>
-                Nova categoria
-              </button>
-            </div>
-
-            {loading && (
-              <div className={styles.feedback}>
-                <p className={styles.feedbackText}>Carregando categorias...</p>
+              <div className={styles.titleActions}>
+                {isReordering ? (
+                  <>
+                    <button
+                      className={styles.btnCancel}
+                      onClick={handleCancelReorder}
+                      disabled={saving}
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      className={styles.btnSaveOrder}
+                      onClick={handleSaveCategoryOrder}
+                      disabled={saving}
+                    >
+                      {saving ? 'Salvando...' : 'Salvar ordem'}
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      className={styles.btnReorder}
+                      onClick={handleStartReorder}
+                      disabled={saving || loading || categories.length <= 1}
+                    >
+                      Ordenar
+                    </button>
+                    <button className={styles.btnNew} onClick={openCreate} disabled={saving}>
+                      <svg className={styles.btnNewIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                        <line x1="12" y1="5" x2="12" y2="19"/>
+                        <line x1="5" y1="12" x2="19" y2="12"/>
+                      </svg>
+                      Nova categoria
+                    </button>
+                  </>
+                )}
               </div>
-            )}
+            </div>
 
             {error && (
               <div className={styles.feedback}>
                 <p className={styles.feedbackError}>{error}</p>
-                <button className={styles.btnRetry} onClick={fetchData}>Tentar novamente</button>
+                {!isReordering && (
+                  <button className={styles.btnRetry} onClick={fetchData}>Tentar novamente</button>
+                )}
               </div>
             )}
 
-            {!loading && !error && categories.length === 0 && (
-              <div className={styles.feedback}>
-                <p className={styles.feedbackText}>Nenhuma categoria cadastrada.</p>
-              </div>
-            )}
-
-            {!loading && !error && categories.length > 0 && (
+            {isReordering ? (
               <ul className={styles.list}>
-                {categories.map(cat => (
-                  <li key={cat.id} className={styles.item}>
-                    <div className={styles.info}>
-                      <p className={styles.label}>{cat.label}</p>
-                      <p className={styles.meta}>
-                        {countProducts(cat.id)} produto{countProducts(cat.id) !== 1 ? 's' : ''}
-                        <span className={styles.idChip}>{cat.id}</span>
-                      </p>
-                    </div>
-                    <div className={styles.actions}>
-                      <button
-                        className={styles.btnOrder}
-                        onClick={() => handleStartOrdering(cat)}
-                        disabled={saving}
-                        title="Ordenar produtos"
-                      >
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" width="15" height="15">
-                          <line x1="3" y1="6" x2="21" y2="6"/>
-                          <line x1="3" y1="12" x2="21" y2="12"/>
-                          <line x1="3" y1="18" x2="21" y2="18"/>
-                        </svg>
-                      </button>
-                      <button
-                        className={styles.btnEdit}
-                        onClick={() => openEdit(cat)}
-                        disabled={saving}
-                        title="Editar categoria"
-                      >
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="15" height="15">
-                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                        </svg>
-                      </button>
-                      <button
-                        className={styles.btnDelete}
-                        onClick={() => handleDelete(cat)}
-                        disabled={saving}
-                        title="Excluir categoria"
-                      >
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="15" height="15">
-                          <polyline points="3 6 5 6 21 6"/>
-                          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-                          <path d="M10 11v6M14 11v6"/>
-                          <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
-                        </svg>
-                      </button>
-                    </div>
-                  </li>
-                ))}
+                {reorderedCategories.map((cat, index) => {
+                  const isFixed = cat.id === 'mais-vendidos'
+                  const prevCat = index > 0 ? reorderedCategories[index - 1] : null
+                  const isFirstMovable = !isFixed && (!prevCat || prevCat.id === 'mais-vendidos')
+                  const isLastMovable = !isFixed && index === reorderedCategories.length - 1
+                  return (
+                    <li key={cat.id} className={styles.item}>
+                      <div className={styles.info}>
+                        <p className={styles.label}>{cat.label}</p>
+                        <p className={styles.meta}>
+                          {countProducts(cat.id)} produto{countProducts(cat.id) !== 1 ? 's' : ''}
+                          <span className={styles.idChip}>{cat.id}</span>
+                        </p>
+                      </div>
+                      {!isFixed && (
+                        <div className={styles.orderArrows}>
+                          <button
+                            className={styles.btnArrow}
+                            onClick={() => handleMoveCategoryUp(index)}
+                            disabled={isFirstMovable || saving}
+                            title="Mover para cima"
+                          >
+                            ↑
+                          </button>
+                          <button
+                            className={styles.btnArrow}
+                            onClick={() => handleMoveCategoryDown(index)}
+                            disabled={isLastMovable || saving}
+                            title="Mover para baixo"
+                          >
+                            ↓
+                          </button>
+                        </div>
+                      )}
+                    </li>
+                  )
+                })}
               </ul>
+            ) : (
+              <>
+                {loading && (
+                  <div className={styles.feedback}>
+                    <p className={styles.feedbackText}>Carregando categorias...</p>
+                  </div>
+                )}
+
+                {!loading && !error && categories.length === 0 && (
+                  <div className={styles.feedback}>
+                    <p className={styles.feedbackText}>Nenhuma categoria cadastrada.</p>
+                  </div>
+                )}
+
+                {!loading && !error && categories.length > 0 && (
+                  <ul className={styles.list}>
+                    {categories.map(cat => (
+                      <li key={cat.id} className={styles.item}>
+                        <div className={styles.info}>
+                          <p className={styles.label}>{cat.label}</p>
+                          <p className={styles.meta}>
+                            {countProducts(cat.id)} produto{countProducts(cat.id) !== 1 ? 's' : ''}
+                            <span className={styles.idChip}>{cat.id}</span>
+                          </p>
+                        </div>
+                        <div className={styles.actions}>
+                          <button
+                            className={styles.btnOrder}
+                            onClick={() => handleStartOrdering(cat)}
+                            disabled={saving}
+                            title="Ordenar produtos"
+                          >
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" width="15" height="15">
+                              <line x1="3" y1="6" x2="21" y2="6"/>
+                              <line x1="3" y1="12" x2="21" y2="12"/>
+                              <line x1="3" y1="18" x2="21" y2="18"/>
+                            </svg>
+                          </button>
+                          <button
+                            className={styles.btnEdit}
+                            onClick={() => openEdit(cat)}
+                            disabled={saving}
+                            title="Editar categoria"
+                          >
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="15" height="15">
+                              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                            </svg>
+                          </button>
+                          <button
+                            className={styles.btnDelete}
+                            onClick={() => handleDelete(cat)}
+                            disabled={saving}
+                            title="Excluir categoria"
+                          >
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="15" height="15">
+                              <polyline points="3 6 5 6 21 6"/>
+                              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                              <path d="M10 11v6M14 11v6"/>
+                              <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                            </svg>
+                          </button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </>
             )}
           </>
         )}
