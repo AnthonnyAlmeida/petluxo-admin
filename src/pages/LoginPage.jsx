@@ -5,16 +5,31 @@ import styles from './LoginPage.module.css'
 export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
-    if (password === import.meta.env.VITE_ADMIN_PASSWORD) {
-      sessionStorage.setItem('petluxo-admin-auth', 'true')
-      navigate('/admin/products')
-    } else {
-      setError('Senha incorreta. Tente novamente.')
+    setLoading(true)
+    try {
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password }),
+      })
+      const data = await res.json()
+      if (data.ok) {
+        sessionStorage.setItem('petluxo-admin-auth', data.token)
+        navigate('/admin/products')
+      } else {
+        setError('Senha incorreta. Tente novamente.')
+        setPassword('')
+      }
+    } catch {
+      setError('Erro ao conectar. Tente novamente.')
       setPassword('')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -42,10 +57,13 @@ export default function LoginPage() {
               onChange={e => { setPassword(e.target.value); setError('') }}
               autoFocus
               autoComplete="current-password"
+              disabled={loading}
             />
           </div>
           {error && <p className={styles.error}>{error}</p>}
-          <button type="submit" className={styles.button}>ENTRAR</button>
+          <button type="submit" className={styles.button} disabled={loading}>
+            {loading ? 'ENTRANDO...' : 'ENTRAR'}
+          </button>
         </form>
         <span className={styles.footer}>petluxostory.com.br</span>
       </div>

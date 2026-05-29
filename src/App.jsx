@@ -5,7 +5,7 @@ import ProductsPage from './pages/ProductsPage'
 import CategoriesPage from './pages/CategoriesPage'
 
 function PrivateRoute({ children }) {
-  const isAuth = sessionStorage.getItem('petluxo-admin-auth') === 'true'
+  const isAuth = !!sessionStorage.getItem('petluxo-admin-auth')
   return isAuth ? children : <Navigate to="/login" replace />
 }
 

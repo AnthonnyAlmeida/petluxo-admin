@@ -5,9 +5,10 @@ Painel administrativo React para gestão de produtos e categorias da PetLuxo. Us
 
 ## Stack e ambiente
 - React 18 + Vite, react-router-dom, CSS Modules
-- GitHub Contents API para leitura/escrita de `products.js` e imagens
+- GitHub Contents API para leitura/escrita de `products.js` e imagens — via Edge Functions (`/api/github`)
 - Canvas API para conversão de imagens em WebP
-- `.env.local`: `VITE_ADMIN_PASSWORD`, `VITE_GITHUB_OWNER`, `VITE_GITHUB_REPO`, `VITE_GITHUB_BRANCH`, `VITE_GITHUB_TOKEN`
+- Variáveis de servidor (sem prefixo `VITE_`, não entram no bundle): `ADMIN_PASSWORD`, `GITHUB_TOKEN`, `GITHUB_BRANCH`, `CLAUDE_API_KEY`
+- Variáveis de cliente (prefixo `VITE_`, usadas para URLs de thumbnail): `VITE_GITHUB_OWNER`, `VITE_GITHUB_REPO`, `VITE_GITHUB_BRANCH` — não são segredos (repo público)
 
 ## Rotas (App.jsx)
 - `/login` → LoginPage
@@ -15,10 +16,14 @@ Painel administrativo React para gestão de produtos e categorias da PetLuxo. Us
 - `/admin/products` → ProductsPage (protegida)
 - `/admin/categories` → CategoriesPage (protegida) — gerenciamento de categorias
 - `*` → redirect `/login`
-- Após login bem-sucedido: navega para `/admin/products`
+- Após login bem-sucedido: navega para `/admin/products`; `PrivateRoute` checa `!!sessionStorage.getItem('petluxo-admin-auth')` (token UUID)
 
 ## Estrutura de arquivos
 ```
+api/
+  auth.js    Edge Function — valida ADMIN_PASSWORD e retorna token UUID de sessão
+  github.js  Edge Function — proxy para GitHub Contents API (token protegido)
+  ai.js      Edge Function — proxy para Anthropic API (chave protegida)
 src/
   pages/   LoginPage, AdminPage, ProductsPage, CategoriesPage
   steps/   Step1Basics, Step2Description, Step3Photo, Step4Review, Step5Publish
@@ -43,7 +48,7 @@ Campos: `id, name, shortName, subtitle, description, bullets, category[], order,
 
 **Com variantes** (`hasVariants: true`): `price: ''`, `buyLink: ''`, `prices[{size, price}]`, `buyLinks[{size, link}]`, `variants` (estado interno do painel)
 
-URL de imagens: `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}/public${product.image}`
+URL de imagens: `https://raw.githubusercontent.com/${VITE_GITHUB_OWNER}/${VITE_GITHUB_REPO}/${VITE_GITHUB_BRANCH}/public${product.image}`
 
 ## categoryOrderUtils.js — funções exportadas
 - `getCategoryOrder(product, categoryId)` → valor numérico do `categoryOrder[categoryId]` ou `0`
@@ -53,9 +58,11 @@ URL de imagens: `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}/pu
 - `normalizeCategoryOrder(product, allProducts)` → adiciona entradas faltantes (com `generateNextCategoryOrder`), remove entradas de categorias que o produto não pertence mais, mantém valores existentes
 
 ## github.js — funções exportadas
-- `getProductsFile()` → `{ content, sha }`; usa `cache: 'no-store'` para forçar fetch sem cache do browser (evita SHA stale quando duas operações ocorrem dentro de 60s — janela do `Cache-Control: private, max-age=60` da API do GitHub); `commitFile(path, content, message, sha?)` — recebe conteúdo bruto inteiro
+- Todas as operações HTTP passam por `/api/github` (Edge Function) via `githubRequest(operation, params)` — o token nunca chega ao browser
+- `getProductsFile()` → `{ content, sha }`; força `cache: 'no-store'` via Edge Function (evita SHA stale)
+- `commitFile(path, content, message, sha?)` — recebe conteúdo bruto; codifica em base64 antes de enviar ao proxy
 - `commitProducts(content, sha)` / `putProductsFile(content, sha)` — atalhos para products.js
-- `commitImage(filename, base64Content)` — upload de imagem
+- `commitImage(filename, base64Content)` — busca SHA existente via `getFile` e faz upload via `putFile`
 - `parseProducts(content)` → array objetos; `parseCategories(content)` → array `{ id, label }`
 - `serializeCategories(categories)` — converte array em bloco JS; `replaceCategoriesInFile(content, categories)` → substitui bloco CATEGORIES mantendo PRODUCTS intacto; escapa `\` e `'` nos valores
 - `replaceProductInFile(content, product)` → substitui bloco de um produto pelo ID usando `productToJS()` interno
@@ -65,7 +72,7 @@ URL de imagens: `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}/pu
 - `usePublish()` — orquestração: `publish()`, `update()`, `reset()`; contém cópias internas de `productToJS`/`replaceProductInFile` independentes das de `github.js`; ambos `publish()` e `update()` chamam `normalizeCategoryOrder` antes de montar o objeto produto, garantindo que `categoryOrder` reflita exatamente as categorias selecionadas no momento do commit
 
 ## Integração com IA
-- `src/lib/ai.js` — `fillProductWithAI(prompt)`: chama Anthropic `claude-haiku-4-5-20251001`; requer `VITE_CLAUDE_API_KEY`
+- `src/lib/ai.js` — `fillProductWithAI(prompt)`: chama `/api/ai` (Edge Function) que repassa ao Anthropic `claude-haiku-4-5-20251001`; `CLAUDE_API_KEY` fica apenas no servidor
 - `src/lib/promptGenerator.js` — `generateAIFillPrompt(rawText, categories)`: injeta IDs válidos; tom premium sem emojis
 
 ## AdminPage.jsx
