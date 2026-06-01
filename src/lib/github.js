@@ -79,7 +79,8 @@ export function serializeCategories(categories) {
   const items = categories.map(c => {
     const id = c.id.replace(/\\/g, '\\\\').replace(/'/g, "\\'")
     const label = c.label.replace(/\\/g, '\\\\').replace(/'/g, "\\'")
-    return `  { id: '${id}', label: '${label}' }`
+    const visibleStr = c.visible !== undefined ? `, visible: ${c.visible}` : ''
+    return `  { id: '${id}', label: '${label}'${visibleStr} }`
   })
   return `export const CATEGORIES = [\n${items.join(',\n')},\n]`
 }

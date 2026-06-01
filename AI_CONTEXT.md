@@ -69,8 +69,8 @@ URL de imagens: `https://raw.githubusercontent.com/${VITE_GITHUB_OWNER}/${VITE_G
 - `commitFile(path, content, message, sha?)` — recebe conteúdo bruto; codifica em base64 antes de enviar ao proxy
 - `commitProducts(content, sha)` / `putProductsFile(content, sha)` — atalhos para products.js
 - `commitImage(filename, base64Content)` — busca SHA existente via `getFile` e faz upload via `putFile`
-- `parseProducts(content)` → array objetos; `parseCategories(content)` → array `{ id, label }`
-- `serializeCategories(categories)` — converte array em bloco JS; `replaceCategoriesInFile(content, categories)` → substitui bloco CATEGORIES mantendo PRODUCTS intacto; escapa `\` e `'` nos valores
+- `parseProducts(content)` → array objetos; `parseCategories(content)` → array `{ id, label, visible? }` (visible: false = oculto; ausente ou true = visível)
+- `serializeCategories(categories)` — converte array em bloco JS, incluindo `visible` quando presente; `replaceCategoriesInFile(content, categories)` → substitui bloco CATEGORIES mantendo PRODUCTS intacto; escapa `\` e `'` nos valores
 - `replaceProductInFile(content, product)` → substitui bloco de um produto pelo ID usando `productToJS()` interno
 
 ## Hooks principais
@@ -95,7 +95,10 @@ URL de imagens: `https://raw.githubusercontent.com/${VITE_GITHUB_OWNER}/${VITE_G
 
 ## CategoriesPage.jsx
 - Mount: `getProductsFile()` → `parseCategories()` + `parseProducts()` — sem polling
-- **Lista**: label, ID chip, contagem de produtos; botões Ordenar / editar / excluir por item
+- **Lista**: label, ID chip, contagem de produtos; botões Ordenar / visibilidade / editar / excluir por item (incluindo "Mais Vendidos")
+- **Botão visibilidade**: olho aberto (`visible !== false`) com tooltip "Ocultar do site"; olho fechado (`visible === false`) com `color: var(--color-text-warning)` e tooltip "Exibir no site"; abre `visibilityModal`
+- **Modal visibilidade** (`visibilityModal = { category, action }`): título "Ocultar categoria?" ou "Exibir categoria?"; mensagem explica efeito imediato; botões "Cancelar" e "Confirmar" → `handleConfirmVisibility()`
+- **Confirmar visibilidade**: `getProductsFile()` fresco → `parseCategories()` → atualiza `visible` (`hide → false`, `show → true`) → `replaceCategoriesInFile` → `commitFile()` com mensagem `'feat: visibilidade de categoria atualizada via painel admin'` → `setCategories()` otimista → fecha modal
 - **Modal criar**: Nome + ID auto-gerado por `labelToId()` (lowercase, normalize NFD, sem acentos, espaços→hífens); valida ID único; commit → `setCategories()` otimista → fecha modal
 - **Modal editar**: ID readonly; só atualiza label; mesmo fluxo de commit otimista
 - **Excluir**: confirm → `replaceCategoriesInFile` + `replaceProductInFile` por produto afetado → um `commitFile` → `setCategories()` otimista

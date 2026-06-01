@@ -48,6 +48,9 @@ export default function CategoriesPage() {
   const [isReordering, setIsReordering] = useState(false)
   const [reorderedCategories, setReorderedCategories] = useState([])
 
+  // modal de visibilidade
+  const [visibilityModal, setVisibilityModal] = useState(null)
+
   useEffect(() => {
     fetchData()
   }, [])
@@ -305,6 +308,36 @@ export default function CategoriesPage() {
     }
   }
 
+  // ── Visibilidade ──────────────────────────────────────
+
+  function handleOpenVisibilityModal(cat) {
+    setVisibilityModal({ category: cat, action: cat.visible !== false ? 'hide' : 'show' })
+  }
+
+  async function handleConfirmVisibility() {
+    const { category, action } = visibilityModal
+    setSaving(true)
+    setError('')
+    try {
+      const { content, sha } = await getProductsFile()
+      const current = parseCategories(content)
+      const updatedCategories = current.map(c =>
+        c.id === category.id ? { ...c, visible: action === 'show' } : c
+      )
+      const newContent = replaceCategoriesInFile(content, updatedCategories)
+      await commitFile('src/data/products.js', newContent, 'feat: visibilidade de categoria atualizada via painel admin', sha)
+      setCategories(prev => prev.map(c =>
+        c.id === category.id ? { ...c, visible: action === 'show' } : c
+      ))
+      setVisibilityModal(null)
+    } catch (err) {
+      setError(err.message)
+      setVisibilityModal(null)
+    } finally {
+      setSaving(false)
+    }
+  }
+
   function handleLogout() {
     sessionStorage.removeItem('petluxo-admin-auth')
     navigate('/login')
@@ -538,6 +571,24 @@ export default function CategoriesPage() {
                             </svg>
                           </button>
                           <button
+                            className={[styles.btnVisibility, cat.visible === false ? styles.btnVisibilityHidden : ''].join(' ').trim()}
+                            onClick={() => handleOpenVisibilityModal(cat)}
+                            disabled={saving}
+                            title={cat.visible !== false ? 'Ocultar do site' : 'Exibir no site'}
+                          >
+                            {cat.visible !== false ? (
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="15" height="15">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                <circle cx="12" cy="12" r="3"/>
+                              </svg>
+                            ) : (
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="15" height="15">
+                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                                <line x1="1" y1="1" x2="23" y2="23"/>
+                              </svg>
+                            )}
+                          </button>
+                          <button
                             className={styles.btnEdit}
                             onClick={() => openEdit(cat)}
                             disabled={saving}
@@ -571,6 +622,30 @@ export default function CategoriesPage() {
           </>
         )}
       </div>
+
+      {visibilityModal && (
+        <div className={styles.overlay} onClick={e => e.target === e.currentTarget && setVisibilityModal(null)}>
+          <div className={styles.modal}>
+            <h2 className={styles.modalTitle}>
+              {visibilityModal.action === 'hide' ? 'Ocultar categoria?' : 'Exibir categoria?'}
+            </h2>
+            <p className={styles.modalMessage}>
+              {visibilityModal.action === 'hide'
+                ? `A categoria "${visibilityModal.category.label}" vai sumir do site imediatamente após salvar.`
+                : `A categoria "${visibilityModal.category.label}" vai aparecer no site imediatamente após salvar.`
+              }
+            </p>
+            <div className={styles.modalActions}>
+              <button className={styles.btnCancel} onClick={() => setVisibilityModal(null)} disabled={saving}>
+                Cancelar
+              </button>
+              <button className={styles.btnSave} onClick={handleConfirmVisibility} disabled={saving}>
+                {saving ? 'Salvando...' : 'Confirmar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {modal && (
         <div className={styles.overlay} onClick={e => e.target === e.currentTarget && closeModal()}>

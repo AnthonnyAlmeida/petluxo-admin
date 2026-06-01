@@ -247,7 +247,8 @@
 
 .btnOrder,
 .btnEdit,
-.btnDelete {
+.btnDelete,
+.btnVisibility {
   width: 34px;
   height: 34px;
   display: flex;
@@ -262,7 +263,8 @@
 }
 
 .btnOrder:hover:not(:disabled),
-.btnEdit:hover:not(:disabled) {
+.btnEdit:hover:not(:disabled),
+.btnVisibility:hover:not(:disabled) {
   border-color: var(--color-gold);
   color: var(--color-dark);
 }
@@ -275,9 +277,20 @@
 
 .btnOrder:disabled,
 .btnEdit:disabled,
-.btnDelete:disabled {
+.btnDelete:disabled,
+.btnVisibility:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+}
+
+.btnVisibilityHidden {
+  color: var(--color-text-warning);
+  border-color: rgba(196, 123, 0, 0.35);
+}
+
+.btnVisibilityHidden:hover:not(:disabled) {
+  border-color: var(--color-text-warning);
+  color: var(--color-text-warning);
 }
 
 /* ── Modal overlay ── */
@@ -564,6 +577,13 @@
 .btnSave:disabled {
   opacity: 0.45;
   cursor: not-allowed;
+}
+
+.modalMessage {
+  font-size: 0.875rem;
+  color: var(--color-muted);
+  margin: 0;
+  line-height: 1.5;
 }
 
 /* ── Title row actions ── */
