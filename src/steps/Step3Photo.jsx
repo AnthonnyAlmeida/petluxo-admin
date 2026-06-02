@@ -10,6 +10,7 @@ export default function Step3Photo({ fields, setField, errors, onNext, onBack, o
   const [converting, setConverting] = useState(false)
   const [preview, setPreview] = useState(null)
   const [fileSize, setFileSize] = useState(null)
+  const [error, setError] = useState(null)
   const inputRef = useRef(null)
 
   // Detecta modo edição: fields.image vem com caminho completo (/images/products/...)
@@ -31,8 +32,13 @@ export default function Step3Photo({ fields, setField, errors, onNext, onBack, o
   async function handleFile(file) {
     if (!file) return
     setConverting(true)
+    setError(null)
     try {
       const blob = await convertToWebP(file)
+      if (blob.size > 3 * 1024 * 1024) {
+        setError('Foto muito grande mesmo após compressão. Tente uma imagem menor.')
+        return
+      }
       const filename = generateImageFilename(fields.name || 'produto')
       const previewUrl = URL.createObjectURL(blob)
       setPreview(previewUrl)
@@ -132,6 +138,7 @@ export default function Step3Photo({ fields, setField, errors, onNext, onBack, o
         </>
       )}
 
+      {error && <p className={styles.error}>{error}</p>}
       {errors.image && <p className={styles.error}>{errors.image}</p>}
 
       <div className={styles.nav}>

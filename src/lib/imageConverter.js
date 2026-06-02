@@ -3,11 +3,15 @@ export function convertToWebP(file, quality = 0.85) {
     const img = new Image()
     const url = URL.createObjectURL(file)
     img.onload = () => {
+      const MAX_WIDTH = 1200
+      const scale = img.naturalWidth > MAX_WIDTH ? MAX_WIDTH / img.naturalWidth : 1
+      const width = Math.round(img.naturalWidth * scale)
+      const height = Math.round(img.naturalHeight * scale)
       const canvas = document.createElement('canvas')
-      canvas.width = img.naturalWidth
-      canvas.height = img.naturalHeight
+      canvas.width = width
+      canvas.height = height
       const ctx = canvas.getContext('2d')
-      ctx.drawImage(img, 0, 0)
+      ctx.drawImage(img, 0, 0, width, height)
       canvas.toBlob(
         blob => {
           URL.revokeObjectURL(url)

@@ -6,7 +6,7 @@ Painel administrativo React para gestão de produtos e categorias da PetLuxo. Us
 ## Stack e ambiente
 - React 18 + Vite, react-router-dom, CSS Modules
 - GitHub Contents API para leitura/escrita de `products.js` e imagens — via Edge Functions (`/api/github`)
-- Canvas API para conversão de imagens em WebP
+- Canvas API para conversão de imagens em WebP (redimensiona para max 1200px de largura, qualidade 0.85)
 - Variáveis de servidor (sem prefixo `VITE_`, usadas pelas Edge Functions): `ADMIN_PASSWORD`, `GITHUB_TOKEN`, `GITHUB_OWNER`, `GITHUB_REPO`, `GITHUB_BRANCH`, `CLAUDE_API_KEY`
 - Variáveis de cliente (prefixo `VITE_`, expostas no bundle para URLs de thumbnail): `VITE_GITHUB_OWNER`, `VITE_GITHUB_REPO`, `VITE_GITHUB_BRANCH` — não são segredos (repo público)
 
@@ -118,3 +118,4 @@ URL de imagens: `https://raw.githubusercontent.com/${VITE_GITHUB_OWNER}/${VITE_G
 ## Step3Photo (edição)
 - `fields.image` normalizado para filename; preview do GitHub exibido
 - Botão "Trocar foto" permite substituir; `imageBlob = null` → `update()` pula upload
+- Após conversão WebP, valida `blob.size > 3 MB` e exibe erro local (estado `error`) sem prosseguir
