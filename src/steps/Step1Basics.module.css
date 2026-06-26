@@ -70,6 +70,19 @@
   color: var(--color-dark);
 }
 
+.toggleLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  font-size: 0.875rem;
+  color: var(--color-dark);
+}
+
+.toggleLabel small {
+  font-size: 0.75rem;
+  color: var(--color-muted);
+}
+
 .toggleSwitch {
   position: relative;
   width: 44px;

@@ -48,7 +48,9 @@ src/
 5. Categorias não são hardcoded: `parseCategories()` em `github.js` extrai `CATEGORIES` do mesmo `products.js` do repo petluxo
 
 ## Modelo de produto
-Campos: `id, name, shortName, subtitle, description, bullets, category[], order, categoryOrder{}, image, badge, tags, originalPrice`
+Campos: `id, name, shortName, subtitle, description, bullets, category[], order, categoryOrder{}, featured, image, badge, tags, originalPrice`
+
+`featured` (boolean, default `false`): produto destaque exibido na seção especial da home. Toggle em `Step1Basics.jsx` abaixo do campo Badge; unicidade garantida em `usePublish` (ver abaixo) — só um produto fica com `featured: true` por vez
 
 **Simples** (`hasVariants: false`): `price`, `buyLink`, `variants: []`
 
@@ -76,6 +78,7 @@ URL de imagens: `https://raw.githubusercontent.com/${VITE_GITHUB_OWNER}/${VITE_G
 ## Hooks principais
 - `useProductForm(nextId, nextOrder, initialData=null)` — estado do formulário; expõe `applyAIData(data)` e `updateCategory(categoryId)` (async: toggle da categoria + fetch de allProducts + `normalizeCategoryOrder` + atualiza `fields.category` e `fields.categoryOrder` juntos)
 - `usePublish()` — orquestração: `publish()`, `update()`, `reset()`; contém cópias internas de `productToJS`/`replaceProductInFile` independentes das de `github.js`; ambos `publish()` e `update()` chamam `normalizeCategoryOrder` antes de montar o objeto produto, garantindo que `categoryOrder` reflita exatamente as categorias selecionadas no momento do commit
+- **Unicidade de `featured`**: em `publish()`/`update()`, após montar `updatedContent` (produto novo/editado já aplicado) e se `fields.featured === true`, reparseia `updatedContent` com `parseProducts`, encontra outros produtos com `featured: true` (id diferente do atual) e chama `replaceProductInFile` para cada um, setando `featured: false` — encadeando `updatedContent` a cada chamada antes do commit final
 
 ## Integração com IA
 - `src/lib/ai.js` — `fillProductWithAI(prompt)`: chama `/api/ai` (Edge Function) que repassa ao Anthropic `claude-haiku-4-5-20251001`; `CLAUDE_API_KEY` fica apenas no servidor

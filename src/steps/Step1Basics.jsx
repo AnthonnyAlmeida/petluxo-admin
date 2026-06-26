@@ -179,6 +179,19 @@ export default function Step1Basics({ fields, setField, errors, onNext, addVaria
         )}
       </div>
 
+      <div className={styles.variantToggle}>
+        <span className={styles.toggleLabel}>
+          <strong>Produto destaque</strong>
+          <small>Aparece na seção especial da página inicial. Só um produto pode ser destaque.</small>
+        </span>
+        <button
+          type="button"
+          className={`${styles.toggleSwitch} ${fields.featured ? styles.toggleSwitchOn : ''}`}
+          onClick={() => setField('featured', !fields.featured)}
+          aria-label="Toggle produto destaque"
+        />
+      </div>
+
       <div className={styles.nav}>
         <button type="button" className={styles.btnNext} onClick={onNext}>
           Próximo →

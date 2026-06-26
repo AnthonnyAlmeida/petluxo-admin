@@ -49,6 +49,7 @@ export function usePublish() {
         category: fields.category,
         order: fields.order,
         categoryOrder,
+        featured: fields.featured ?? false,
         image: `/images/products/${fields.image}`,
         badge: fields.badge || undefined,
         ...(fields.hasVariants
@@ -58,7 +59,20 @@ export function usePublish() {
         tags: fields.tags.filter(Boolean),
       }
 
-      const updatedContent = appendProductToFile(content, newProduct)
+      let updatedContent = appendProductToFile(content, newProduct)
+
+      // Se o produto sendo salvo é destaque, remover featured dos outros
+      if (fields.featured === true) {
+        const allProductsAfter = parseProducts(updatedContent)
+        const currentId = fields.id
+        for (const p of allProductsAfter) {
+          if (p.featured === true && p.id !== currentId) {
+            const withoutFeatured = { ...p, featured: false }
+            updatedContent = replaceProductInFile(updatedContent, withoutFeatured)
+          }
+        }
+      }
+
       await commitProducts(updatedContent, sha)
       updateStep('products', { state: 'done', detail: 'products.js atualizado' })
 
@@ -173,6 +187,7 @@ export function usePublish() {
         category: fields.category,
         order: fields.order,
         categoryOrder,
+        featured: fields.featured ?? false,
         image: `/images/products/${fields.image}`,
         badge: fields.badge || undefined,
         ...(fields.hasVariants
@@ -182,7 +197,20 @@ export function usePublish() {
         tags: fields.tags.filter(Boolean),
       }
 
-      const updatedContent = replaceProductInFile(content, updatedProduct)
+      let updatedContent = replaceProductInFile(content, updatedProduct)
+
+      // Se o produto sendo salvo é destaque, remover featured dos outros
+      if (fields.featured === true) {
+        const allProductsAfter = parseProducts(updatedContent)
+        const currentId = fields.id
+        for (const p of allProductsAfter) {
+          if (p.featured === true && p.id !== currentId) {
+            const withoutFeatured = { ...p, featured: false }
+            updatedContent = replaceProductInFile(updatedContent, withoutFeatured)
+          }
+        }
+      }
+
       await commitFile('src/data/products.js', updatedContent, 'feat: produto editado via painel admin', sha)
       updateStep('products', { state: 'done', detail: 'products.js atualizado' })
 
