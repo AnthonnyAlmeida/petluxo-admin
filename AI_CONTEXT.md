@@ -24,6 +24,13 @@ Painel administrativo React para gestão de produtos e categorias da PetLuxo. Us
 - `*` → redirect `/login`
 - Após login bem-sucedido: navega para `/admin/products`; `PrivateRoute` checa `!!sessionStorage.getItem('petluxo-admin-auth')` (token UUID)
 
+## LoginPage.jsx
+- Tema "terminal premium": fundo escuro (`#13110e`), paleta dourada única (`#c9a96e`), fonte `Courier New` monoespaçada (logo em `Cormorant Garamond`)
+- `canvasRef` + `useEffect`: animação Matrix rain via Canvas API (`setInterval` de 55ms), redesenhada em `resize` da janela; tons dourados (`rgba(201,169,110,...)`), efeito puramente decorativo, `pointer-events: none`
+- Relógio (`time`) atualizado a cada 1s via `setInterval`, exibido no rodapé do card (`toLocaleTimeString('pt-BR')`)
+- `handleSubmit`: trata erro via `data.error || 'Senha incorreta'` lançado como `Error` quando `!res.ok`; `api/auth.js` hoje responde apenas `{ ok: false }` em falha (sem `error`), então o fallback é o que é exibido na prática
+- Demais elementos visuais (`scanline`, `statusRow` com dot pulsante, `glitch` no logo, `header` agrupando logo+subtítulo) são CSS puro, sem lógica associada
+
 ## Estrutura de arquivos
 ```
 api/

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import styles from './LoginPage.module.css'
 
@@ -6,11 +6,57 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [time, setTime] = useState('')
+  const canvasRef = useRef(null)
   const navigate = useNavigate()
+
+  useEffect(() => {
+    function updateTime() {
+      setTime(new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }))
+    }
+    updateTime()
+    const t = setInterval(updateTime, 1000)
+    return () => clearInterval(t)
+  }, [])
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    function resize() {
+      canvas.width = canvas.offsetWidth
+      canvas.height = canvas.offsetHeight
+    }
+    resize()
+    window.addEventListener('resize', resize)
+    const chars = 'アイウエオカキクケコ0123456789ABCDEF✦◆▸▹<>{}[]|'
+    const fontSize = 13
+    let drops = Array(Math.floor(canvas.width / fontSize)).fill(1)
+    function draw() {
+      ctx.fillStyle = 'rgba(19,17,14,0.06)'
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
+      ctx.font = fontSize + 'px monospace'
+      for (let i = 0; i < drops.length; i++) {
+        const text = chars[Math.floor(Math.random() * chars.length)]
+        ctx.fillStyle = drops[i] * fontSize < 30
+          ? 'rgba(201,169,110,0.9)'
+          : 'rgba(201,169,110,0.3)'
+        ctx.fillText(text, i * fontSize, drops[i] * fontSize)
+        if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0
+        drops[i]++
+      }
+    }
+    const interval = setInterval(draw, 55)
+    return () => {
+      clearInterval(interval)
+      window.removeEventListener('resize', resize)
+    }
+  }, [])
 
   async function handleSubmit(e) {
     e.preventDefault()
     setLoading(true)
+    setError('')
     try {
       const res = await fetch('/api/auth', {
         method: 'POST',
@@ -18,15 +64,11 @@ export default function LoginPage() {
         body: JSON.stringify({ password }),
       })
       const data = await res.json()
-      if (data.ok) {
-        sessionStorage.setItem('petluxo-admin-auth', data.token)
-        navigate('/admin/products')
-      } else {
-        setError('Senha incorreta. Tente novamente.')
-        setPassword('')
-      }
-    } catch {
-      setError('Erro ao conectar. Tente novamente.')
+      if (!res.ok) throw new Error(data.error || 'Senha incorreta')
+      sessionStorage.setItem('petluxo-admin-auth', data.token)
+      navigate('/admin/products')
+    } catch (err) {
+      setError(err.message)
       setPassword('')
     } finally {
       setLoading(false)
@@ -35,37 +77,46 @@ export default function LoginPage() {
 
   return (
     <div className={styles.page}>
+      <canvas ref={canvasRef} className={styles.matrix} />
       <div className={styles.card}>
-        <div className={styles.icon}>
-          <svg className={styles.iconSvg} viewBox="0 0 24 24">
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-          </svg>
+        <div className={styles.scanline} />
+        <div className={styles.statusRow}>
+          <div className={styles.dot} />
+          <span className={styles.statusText}>Sistema seguro — conexão criptografada</span>
         </div>
+        <div className={styles.dividerLine} />
         <div className={styles.header}>
-          <span className={styles.logo}>✦ PetLuxo</span>
-          <span className={styles.subtitle}>Área restrita — painel administrativo</span>
+          <p className={styles.logo}>✦ PetLuxo</p>
+          <p className={styles.subtitle}>acesso restrito // painel administrativo</p>
         </div>
+        <div className={styles.dividerLine} />
         <form className={styles.form} onSubmit={handleSubmit}>
           <div>
-            <label className={styles.label} htmlFor="password">Senha</label>
-            <input
-              id="password"
-              type="password"
-              className={[styles.input, error ? styles.inputError : ''].join(' ')}
-              value={password}
-              onChange={e => { setPassword(e.target.value); setError('') }}
-              autoFocus
-              autoComplete="current-password"
-              disabled={loading}
-            />
+            <label className={styles.label} htmlFor="password">// senha de acesso</label>
+            <div className={styles.inputWrap}>
+              <input
+                id="password"
+                type="password"
+                className={[styles.input, error ? styles.inputError : ''].join(' ')}
+                value={password}
+                onChange={e => { setPassword(e.target.value); setError('') }}
+                autoFocus
+                autoComplete="current-password"
+                disabled={loading}
+              />
+              <div className={styles.cursorBlink} />
+            </div>
           </div>
           {error && <p className={styles.error}>{error}</p>}
           <button type="submit" className={styles.button} disabled={loading}>
-            {loading ? 'ENTRANDO...' : 'ENTRAR'}
+            {loading ? '[ autenticando... ]' : '[ entrar ]'}
           </button>
         </form>
-        <span className={styles.footer}>petluxostory.com.br</span>
+        <div className={styles.dividerLine} />
+        <div className={styles.footerRow}>
+          <span className={styles.footer}>petluxostory.com.br</span>
+          <span className={styles.footer}>{time}</span>
+        </div>
       </div>
     </div>
   )
