@@ -296,7 +296,7 @@ export default function ProductsPage() {
                   <div className={styles.supplierRow}>
                     {product.supplierLink ? (
                       <a
-                        href={product.supplierLink}
+                        href={product.supplierLink.startsWith('http') ? product.supplierLink : `https://${product.supplierLink}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className={styles.supplierLink}
