@@ -3,10 +3,12 @@
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
+  background: transparent;
 }
 
 .title {
   font-family: var(--font-serif);
-  font-size: 1.125rem;
-  color: var(--color-dark);
+  font-size: 1.25rem;
+  color: #c9a96e;
+  text-shadow: 0 0 16px rgba(201,169,110,0.3);
 }

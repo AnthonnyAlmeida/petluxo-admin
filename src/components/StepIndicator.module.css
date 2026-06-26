@@ -15,22 +15,22 @@
   height: 4px;
   flex: 1;
   border-radius: 2px;
-  background: #e8ddd0;
+  background: rgba(250,247,242,0.08);
   transition: background var(--transition);
 }
 
 .dotDone {
-  background: var(--color-gold);
-  opacity: 0.45;
+  background: rgba(201,169,110,0.4);
 }
 
 .dotActive {
-  background: var(--color-gold);
-  opacity: 1;
+  background: #c9a96e;
 }
 
 .label {
-  font-size: 0.6875rem;
-  color: var(--color-muted);
-  letter-spacing: 0.02em;
+  font-family: 'Courier New', monospace;
+  font-size: 0.65rem;
+  color: rgba(201,169,110,0.45);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }

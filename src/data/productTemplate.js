@@ -12,6 +12,7 @@ export function createProductTemplate(nextId, nextOrder) {
     order: nextOrder,
     categoryOrder: {},
     featured: false,
+    visible: true,
     image: '',
     badge: '',
     buyLink: '',

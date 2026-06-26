@@ -123,7 +123,6 @@ export default function AdminPage() {
       <header className={styles.header}>
         <span className={styles.headerLogo}>✦ PetLuxo</span>
         <div className={styles.headerRight}>
-          <span className={styles.headerLabel}>Admin</span>
           <button className={styles.btnLogout} onClick={handleLogout}>SAIR</button>
         </div>
       </header>

@@ -3,20 +3,21 @@
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  background: transparent;
 }
 
 .row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.75rem;
+  gap: 12px;
 }
 
 .sectionLabel {
-  font-size: 0.6875rem;
-  font-weight: 500;
-  color: var(--color-muted);
+  font-family: 'Courier New', monospace;
+  font-size: 0.65rem;
+  color: rgba(201,169,110,0.45);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   margin-bottom: 0.25rem;
 }
 
@@ -29,65 +30,68 @@
 .catBtn {
   padding: 0.4rem 0.875rem;
   border-radius: 20px;
-  border: 0.5px solid #e0d5c5;
-  background: #fff;
+  border: 1px solid rgba(201,169,110,0.15);
+  background: transparent;
   font-size: 0.8125rem;
-  color: var(--color-muted);
+  color: rgba(250,247,242,0.35);
+  cursor: pointer;
   transition: all var(--transition);
   -webkit-tap-highlight-color: transparent;
 }
 
 .catBtnActive {
-  background: var(--color-cream-dark);
-  border-color: var(--color-gold);
-  color: var(--color-gold-dark);
+  background: rgba(201,169,110,0.12);
+  border-color: rgba(201,169,110,0.5);
+  color: #c9a96e;
   font-weight: 500;
 }
 
 .catError {
-  font-size: 0.6875rem;
+  font-family: 'Courier New', monospace;
+  font-size: 0.72rem;
   color: var(--color-error);
 }
 
 .nav {
   display: flex;
-  justify-content: flex-end;
-  padding-top: 0.5rem;
+  justify-content: space-between;
+  margin-top: 1.5rem;
+  gap: 8px;
 }
 
 .variantToggle {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.75rem;
-  background: var(--color-cream-dark);
-  border-radius: var(--radius-md);
-  border: 0.5px solid #e0d5c5;
+  gap: 0.75rem;
+  padding-top: 0.875rem;
+  margin-top: 0.25rem;
+  border-top: 1px solid rgba(201,169,110,0.1);
 }
 
 .variantToggleLabel {
-  font-size: 0.875rem;
-  color: var(--color-dark);
+  font-size: 0.85rem;
+  color: rgba(250,247,242,0.6);
 }
 
 .toggleLabel {
   display: flex;
   flex-direction: column;
   gap: 0.125rem;
-  font-size: 0.875rem;
-  color: var(--color-dark);
+  font-size: 0.85rem;
+  color: rgba(250,247,242,0.6);
 }
 
 .toggleLabel small {
   font-size: 0.75rem;
-  color: var(--color-muted);
+  color: rgba(250,247,242,0.3);
 }
 
 .toggleSwitch {
   position: relative;
   width: 44px;
   height: 26px;
-  background: #ccc;
+  background: rgba(250,247,242,0.1);
   border-radius: 13px;
   border: none;
   cursor: pointer;
@@ -102,14 +106,14 @@
   left: 3px;
   width: 20px;
   height: 20px;
-  background: #fff;
+  background: #faf7f2;
   border-radius: 50%;
   transition: transform var(--transition);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
 }
 
 .toggleSwitchOn {
-  background: var(--color-gold);
+  background: #c9a96e;
 }
 
 .toggleSwitchOn::after {
@@ -130,11 +134,11 @@
 }
 
 .variantHeaderCell {
-  font-size: 0.6875rem;
-  font-weight: 500;
-  color: var(--color-muted);
+  font-family: 'Courier New', monospace;
+  font-size: 0.62rem;
+  color: rgba(201,169,110,0.35);
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
 }
 
 .variantRow {
@@ -145,20 +149,26 @@
 }
 
 .variantInput {
-  padding: 0.6rem 0.625rem;
-  border: 0.5px solid #e0d5c5;
-  border-radius: var(--radius-sm);
+  padding: 0.75rem 1rem;
+  border: 1px solid rgba(201,169,110,0.2);
+  border-radius: 4px;
   font-size: 0.875rem;
-  background: #fff;
-  color: var(--color-dark);
+  background: #13110e;
+  color: #faf7f2;
   outline: none;
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
+  font-family: 'Inter', sans-serif;
+  transition: border-color var(--transition);
 }
 
 .variantInput:focus {
-  border-color: var(--color-gold);
+  border-color: rgba(201,169,110,0.55);
+}
+
+.variantInput::placeholder {
+  color: rgba(250,247,242,0.18);
 }
 
 .variantRemove {
@@ -166,48 +176,64 @@
   height: 28px;
   border: none;
   background: none;
-  color: var(--color-muted);
+  color: rgba(192,57,43,0.5);
   font-size: 1.25rem;
   line-height: 1;
   padding: 0;
-  opacity: 0.5;
+  cursor: pointer;
   flex-shrink: 0;
+  transition: color var(--transition);
+}
+
+.variantRemove:hover {
+  color: var(--color-error);
 }
 
 .btnAddVariant {
-  font-size: 0.8125rem;
-  color: var(--color-gold-dark);
-  background: none;
-  border: 0.5px dashed #d4b896;
-  border-radius: var(--radius-sm);
+  font-family: 'Courier New', monospace;
+  font-size: 0.75rem;
+  color: rgba(201,169,110,0.6);
+  background: transparent;
+  border: 1px solid rgba(201,169,110,0.2);
+  border-radius: 3px;
   padding: 0.5rem;
   width: 100%;
-  transition: background var(--transition);
+  cursor: pointer;
+  transition: all var(--transition);
 }
 
-.btnAddVariant:active {
-  background: var(--color-cream-dark);
+.btnAddVariant:hover {
+  border-color: rgba(201,169,110,0.4);
+  color: #c9a96e;
 }
 
 .variantError {
-  font-size: 0.6875rem;
+  font-family: 'Courier New', monospace;
+  font-size: 0.72rem;
   color: var(--color-error);
 }
 
 .btnNext {
   padding: 0.75rem 1.75rem;
-  background: var(--color-dark);
-  color: var(--color-gold);
+  background: #c9a96e;
+  color: #13110e;
   border: none;
-  border-radius: var(--radius-md);
+  border-radius: 3px;
   font-size: 0.8125rem;
-  font-weight: 500;
+  font-weight: 600;
   letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
   transition: opacity var(--transition);
 }
 
-.btnNext:active {
-  opacity: 0.7;
+.btnNext:hover:not(:disabled) {
+  opacity: 0.88;
+}
+
+.btnNext:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 @media (max-width: 480px) {

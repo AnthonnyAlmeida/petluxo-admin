@@ -348,7 +348,6 @@ export default function CategoriesPage() {
       <header className={styles.header}>
         <span className={styles.headerLogo}>✦ PetLuxo</span>
         <div className={styles.headerRight}>
-          <span className={styles.headerLabel}>Admin</span>
           <button className={styles.btnLogout} onClick={handleLogout}>SAIR</button>
         </div>
       </header>
@@ -437,6 +436,7 @@ export default function CategoriesPage() {
 
             <div className={styles.titleRow}>
               <div>
+                <p className={styles.titleEyebrow}>// gestão de categorias</p>
                 <h1 className={styles.title}>Categorias</h1>
                 {!loading && !error && (
                   <p className={styles.count}>
