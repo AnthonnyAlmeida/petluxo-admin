@@ -65,6 +65,7 @@ export default function ProductsPage() {
   const [supplierModal, setSupplierModal] = useState(null) // { product } ou null
   const [supplierLinkInput, setSupplierLinkInput] = useState('')
   const [savingSupplier, setSavingSupplier] = useState(false)
+  const [deleteModal, setDeleteModal] = useState(null) // { product } ou null
 
   useEffect(() => {
     fetchProducts()
@@ -88,7 +89,8 @@ export default function ProductsPage() {
         if (JSON.stringify(newCategories) !== JSON.stringify(categories)) {
           setCategories(newCategories)
         }
-      } catch (err) {
+      // eslint-disable-next-line no-unused-vars
+      } catch (_err) {
         // Ignorar erros silenciosamente durante o polling
       }
     }, 5000) // 5 segundos
@@ -121,16 +123,22 @@ export default function ProductsPage() {
     return matchSearch && matchCat
   })
 
-  async function handleDelete(product) {
-    if (!window.confirm(`Tem certeza que deseja excluir "${product.name}"?`)) return
+  function handleDelete(product) {
+    setDeleteModal({ product })
+  }
+
+  async function handleConfirmDelete() {
+    if (!deleteModal) return
+    const product = deleteModal.product
     setDeleting(product.id)
+    setDeleteModal(null)
     try {
       const { content, sha } = await getProductsFile()
       const updated = removeProductFromFile(content, product.id)
       await putProductsFile(updated, sha)
       await fetchProducts()
     } catch (err) {
-      alert('Erro ao excluir: ' + err.message)
+      console.error('Erro ao excluir produto:', err)
     } finally {
       setDeleting(null)
     }
@@ -376,6 +384,23 @@ export default function ProductsPage() {
                 disabled={savingSupplier}
               >
                 {savingSupplier ? 'Salvando...' : 'Salvar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {deleteModal && (
+        <div className={styles.modalOverlay} onClick={() => setDeleteModal(null)}>
+          <div className={styles.modal} onClick={e => e.stopPropagation()}>
+            <h3 className={styles.modalTitle}>Excluir produto</h3>
+            <p className={styles.modalProduct}>Tem certeza que deseja excluir <strong>{deleteModal.product.name}</strong>? Esta ação não pode ser desfeita.</p>
+            <div className={styles.modalActions}>
+              <button className={styles.btnCancel} onClick={() => setDeleteModal(null)}>
+                Cancelar
+              </button>
+              <button className={styles.btnDanger} onClick={handleConfirmDelete}>
+                Excluir
               </button>
             </div>
           </div>

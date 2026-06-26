@@ -549,3 +549,19 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+.btnDanger {
+  padding: 8px 16px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--color-error);
+  color: white;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: opacity var(--transition);
+}
+
+.btnDanger:hover {
+  opacity: 0.85;
+}

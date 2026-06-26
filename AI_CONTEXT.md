@@ -96,8 +96,10 @@ URL de imagens: `https://raw.githubusercontent.com/${VITE_GITHUB_OWNER}/${VITE_G
 - Mount + polling 5s: `parseProducts()` + `parseCategories()` → ordena por `order` desc
 - Filtros: busca por nome; categoria pills (seleção única, match por `category.includes(id)`)
 - Card: thumbnail 52px, nome, preço, categoria (label do primeiro ID), badges, linha de fornecedor (link "🔗 Fornecedor" ou "Sem link de fornecedor" + botão lápis), ações (Editar, lixeira)
-- **Excluir**: confirm → `removeProductFromFile()` (manipulação de string) → `putProductsFile()`
+- Link de fornecedor no card sempre normalizado para protocolo: `product.supplierLink.startsWith('http') ? product.supplierLink : \`https://${product.supplierLink}\`` — cobre valores salvos sem `http(s)://`
 - **Editar link de fornecedor** (`supplierModal = { product }` ou `null`): botão lápis na linha de fornecedor do card abre modal (`handleOpenSupplierModal`) com input pré-preenchido por `product.supplierLink`; "Salvar" (`handleSaveSupplierLink`) busca `getProductsFile()` fresco, monta produto atualizado (`{ ...product, supplierLink: input.trim() }`), `replaceProductInFile` + `commitFile()` com mensagem `'feat: link de fornecedor atualizado via painel admin'`, depois `setProducts()` otimista e fecha modal — fluxo independente do `/admin` (5 steps), commit direto da listagem
+- **Excluir produto** (`deleteModal = { product }` ou `null`): botão lixeira abre modal próprio (`handleDelete` só seta `deleteModal`, não há mais `window.confirm`); "Excluir" (`handleConfirmDelete`) fecha o modal, marca `deleting = product.id`, busca `getProductsFile()` fresco, `removeProductFromFile()` (manipulação de string) → `putProductsFile()` → `fetchProducts()`; erros só logados via `console.error` (sem `alert`)
+- Modais de `ProductsPage.jsx` compartilham as mesmas classes (`.modalOverlay`, `.modal`, `.modalTitle`, `.modalProduct`, `.modalActions`, `.btnCancel`) em `ProductsPage.module.css`; botão de confirmação varia: `.btnSave` (dourado, ações neutras como salvar fornecedor) vs `.btnDanger` (vermelho `--color-error`, ações destrutivas como excluir)
 
 ## CategoriesPage.jsx
 - Mount: `getProductsFile()` → `parseCategories()` + `parseProducts()` — sem polling
@@ -118,7 +120,7 @@ URL de imagens: `https://raw.githubusercontent.com/${VITE_GITHUB_OWNER}/${VITE_G
 ## Fluxos
 **Criar produto:** ProductsPage → `/admin` → 5 steps → `publish()` → Step5
 **Editar produto:** ProductsPage → `/admin` (com `state.editProduct`) → 5 steps → `update()`
-**Excluir produto:** ProductsPage → confirm → `removeProductFromFile()` → `putProductsFile()`
+**Excluir produto:** ProductsPage → modal de confirmação (`deleteModal`) → `removeProductFromFile()` → `putProductsFile()`
 **Categorias:** ProductsPage (btn Categorias) → CategoriesPage → criar/editar/excluir
 
 ## Step3Photo (edição)
