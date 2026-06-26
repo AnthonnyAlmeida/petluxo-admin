@@ -48,7 +48,9 @@ src/
 5. Categorias não são hardcoded: `parseCategories()` em `github.js` extrai `CATEGORIES` do mesmo `products.js` do repo petluxo
 
 ## Modelo de produto
-Campos: `id, name, shortName, subtitle, description, bullets, category[], order, categoryOrder{}, featured, image, badge, tags, originalPrice`
+Campos: `id, name, shortName, subtitle, description, bullets, category[], order, categoryOrder{}, featured, image, badge, tags, originalPrice, supplierLink`
+
+`supplierLink` (string, default `''`): link de origem/compra do produto junto ao fornecedor — uso interno do admin, nunca exibido no site público. **Não existe campo no formulário de criação/edição** (`Step1Basics.jsx`/`useProductForm.js`) — é editado exclusivamente inline em `ProductsPage.jsx` via modal próprio, com commit imediato (sem passar pelo fluxo de 5 steps). Protegido em `applyAIData` (`useProductForm.js`): a chave é descartada do payload da IA antes do merge, caso uma resposta de IA inclua essa chave por engano.
 
 `featured` (boolean, default `false`): produto destaque exibido na seção especial da home. Toggle em `Step1Basics.jsx` abaixo do campo Badge; unicidade garantida em `usePublish` (ver abaixo) — só um produto fica com `featured: true` por vez
 
@@ -93,8 +95,9 @@ URL de imagens: `https://raw.githubusercontent.com/${VITE_GITHUB_OWNER}/${VITE_G
 - Header: botão **Categorias** (→ `/admin/categories`) + botão SAIR
 - Mount + polling 5s: `parseProducts()` + `parseCategories()` → ordena por `order` desc
 - Filtros: busca por nome; categoria pills (seleção única, match por `category.includes(id)`)
-- Card: thumbnail 52px, nome, preço, categoria (label do primeiro ID), badges, Editar + lixeira
+- Card: thumbnail 52px, nome, preço, categoria (label do primeiro ID), badges, linha de fornecedor (link "🔗 Fornecedor" ou "Sem link de fornecedor" + botão lápis), ações (Editar, lixeira)
 - **Excluir**: confirm → `removeProductFromFile()` (manipulação de string) → `putProductsFile()`
+- **Editar link de fornecedor** (`supplierModal = { product }` ou `null`): botão lápis na linha de fornecedor do card abre modal (`handleOpenSupplierModal`) com input pré-preenchido por `product.supplierLink`; "Salvar" (`handleSaveSupplierLink`) busca `getProductsFile()` fresco, monta produto atualizado (`{ ...product, supplierLink: input.trim() }`), `replaceProductInFile` + `commitFile()` com mensagem `'feat: link de fornecedor atualizado via painel admin'`, depois `setProducts()` otimista e fecha modal — fluxo independente do `/admin` (5 steps), commit direto da listagem
 
 ## CategoriesPage.jsx
 - Mount: `getProductsFile()` → `parseCategories()` + `parseProducts()` — sem polling

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getProductsFile, parseProducts, parseCategories, putProductsFile } from '../lib/github'
+import { getProductsFile, parseProducts, parseCategories, putProductsFile, replaceProductInFile, commitFile } from '../lib/github'
 import styles from './ProductsPage.module.css'
 
 const OWNER = import.meta.env.VITE_GITHUB_OWNER
@@ -62,6 +62,9 @@ export default function ProductsPage() {
   const [deleting, setDeleting] = useState(null)
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('')
+  const [supplierModal, setSupplierModal] = useState(null) // { product } ou null
+  const [supplierLinkInput, setSupplierLinkInput] = useState('')
+  const [savingSupplier, setSavingSupplier] = useState(false)
 
   useEffect(() => {
     fetchProducts()
@@ -140,6 +143,35 @@ export default function ProductsPage() {
   function handleLogout() {
     sessionStorage.removeItem('petluxo-admin-auth')
     navigate('/login')
+  }
+
+  function handleOpenSupplierModal(product) {
+    setSupplierLinkInput(product.supplierLink || '')
+    setSupplierModal({ product })
+  }
+
+  async function handleSaveSupplierLink() {
+    if (!supplierModal) return
+    setSavingSupplier(true)
+    try {
+      const { content, sha } = await getProductsFile()
+      const updatedProduct = { ...supplierModal.product, supplierLink: supplierLinkInput.trim() }
+      const updatedContent = replaceProductInFile(content, updatedProduct)
+      await commitFile(
+        'src/data/products.js',
+        updatedContent,
+        'feat: link de fornecedor atualizado via painel admin',
+        sha
+      )
+      setProducts(prev => prev.map(p =>
+        p.id === updatedProduct.id ? updatedProduct : p
+      ))
+      setSupplierModal(null)
+    } catch (err) {
+      console.error('Erro ao salvar link do fornecedor:', err)
+    } finally {
+      setSavingSupplier(false)
+    }
   }
 
   return (
@@ -261,6 +293,30 @@ export default function ProductsPage() {
                       <span className={styles.badgeSizes}>{product.prices.length} tamanhos</span>
                     )}
                   </div>
+                  <div className={styles.supplierRow}>
+                    {product.supplierLink ? (
+                      <a
+                        href={product.supplierLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={styles.supplierLink}
+                      >
+                        🔗 Fornecedor
+                      </a>
+                    ) : (
+                      <span className={styles.supplierEmpty}>Sem link de fornecedor</span>
+                    )}
+                    <button
+                      className={styles.btnSupplierEdit}
+                      onClick={() => handleOpenSupplierModal(product)}
+                      title="Editar link do fornecedor"
+                    >
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                      </svg>
+                    </button>
+                  </div>
                 </div>
                 <div className={styles.actions}>
                   <button
@@ -296,6 +352,35 @@ export default function ProductsPage() {
           </ul>
         )}
       </div>
+
+      {supplierModal && (
+        <div className={styles.modalOverlay} onClick={() => setSupplierModal(null)}>
+          <div className={styles.modal} onClick={e => e.stopPropagation()}>
+            <h3 className={styles.modalTitle}>Link do fornecedor</h3>
+            <p className={styles.modalProduct}>{supplierModal.product.name}</p>
+            <input
+              className={styles.modalInput}
+              type="url"
+              value={supplierLinkInput}
+              onChange={e => setSupplierLinkInput(e.target.value)}
+              placeholder="https://..."
+              autoFocus
+            />
+            <div className={styles.modalActions}>
+              <button className={styles.btnCancel} onClick={() => setSupplierModal(null)}>
+                Cancelar
+              </button>
+              <button
+                className={styles.btnSave}
+                onClick={handleSaveSupplierLink}
+                disabled={savingSupplier}
+              >
+                {savingSupplier ? 'Salvando...' : 'Salvar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

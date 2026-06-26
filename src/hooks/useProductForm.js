@@ -80,7 +80,9 @@ export function useProductForm(nextId, nextOrder, initialData = null) {
   }
 
   function applyAIData(data) {
-    setFields(prev => ({ ...prev, ...data }))
+    // eslint-disable-next-line no-unused-vars
+    const { supplierLink: _ignored, ...safeData } = data
+    setFields(prev => ({ ...prev, ...safeData }))
   }
 
   async function updateCategory(categoryId) {

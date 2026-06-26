@@ -15,6 +15,7 @@ export function createProductTemplate(nextId, nextOrder) {
     image: '',
     badge: '',
     buyLink: '',
+    supplierLink: '',
     tags: [],
     hasVariants: false,
     variants: [],
