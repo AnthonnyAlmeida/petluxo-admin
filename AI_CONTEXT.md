@@ -21,7 +21,7 @@ Painel administrativo React para gestão de produtos e categorias da PetLuxo. Us
 - `/admin` → AdminPage (protegida) — criação e edição de produto
 - `/admin/products` → ProductsPage (protegida)
 - `/admin/categories` → CategoriesPage (protegida) — gerenciamento de categorias
-- `*` → redirect `/login`
+- `*` → NotFoundPage (404) — não redireciona mais para `/login`
 - Após login bem-sucedido: navega para `/admin/products`; `PrivateRoute` checa `!!sessionStorage.getItem('petluxo-admin-auth')` (token UUID)
 
 ## Tema global e estilos base
@@ -34,6 +34,13 @@ Painel administrativo React para gestão de produtos e categorias da PetLuxo. Us
 - `.scanline`: barra animada que desliza verticalmente sobre o card (CSS puro); `.glitch` no logo "✦ PetLuxo" (deslocamento de camadas via `text-shadow`/`clip-path`, CSS puro); `.statusRow` com dot pulsante + texto "Sistema seguro — conexão criptografada"
 - `handleSubmit`: trata erro via `data.error || 'Senha incorreta'` lançado como `Error` quando `!res.ok`; `api/auth.js` hoje responde apenas `{ ok: false }` em falha (sem `error`), então o fallback é o que é exibido na prática
 
+## NotFoundPage.jsx
+- Rota catch-all (`*`) do `App.jsx`; substitui o redirect silencioso para `/login` que existia antes — qualquer URL desconhecida agora renderiza uma página 404 própria
+- Reusa o mesmo padrão de Matrix rain da `LoginPage` (`canvasRef` + `useEffect` único, `setInterval` de 55ms, mesmos `chars`, mesmas cores douradas, redesenho em `resize`) — sem relógio e sem formulário, já que a página não tem estado de autenticação
+- `.content` centralizado (`.page` com `min-height: 100vh`, flex centrado): `.eyebrow` ("// erro do sistema", monoespaçado dourado translúcido uppercase) → `.errorCode` ("404", `Cormorant Garamond` ~8rem, dourado `#c9a96e`, `text-shadow` sutil, classe `.glitch` aplicada via `${styles.errorCode} ${styles.glitch}` com o mesmo keyframe de glitch do logo da `LoginPage`, redefinido localmente pois CSS Modules escopa `@keyframes` por arquivo) → `.dividerLine` → `.title` ("Página não encontrada", `Cormorant Garamond`, `#faf7f2`, sem negrito) → `.message` (texto explicativo, monoespaçado, `rgba(250,247,242,0.3)`, fonte pequena)
+- `.statusRow` no mesmo padrão visual da `LoginPage` ("acesso negado · rota inválida"), mas `.dot` usa `var(--color-error)` em vez de dourado — único elemento vermelho da tela
+- Botão "← Voltar ao painel" (`.btn`, dourado sólido `#c9a96e`/`#13110e`, monoespaçado uppercase, `border-radius: 3px`) navega via `useNavigate` para `/admin/products` — não passa por `PrivateRoute`, então se a sessão tiver expirado o próprio `ProductsPage`/`PrivateRoute` redireciona para `/login` na sequência
+
 ## Estrutura de arquivos
 ```
 api/
@@ -41,7 +48,7 @@ api/
   github.js  Edge Function — proxy para GitHub Contents API (token protegido)
   ai.js      Edge Function — proxy para Anthropic API (chave protegida)
 src/
-  pages/   LoginPage, AdminPage, ProductsPage, CategoriesPage
+  pages/   LoginPage, AdminPage, ProductsPage, CategoriesPage, NotFoundPage
   steps/   Step1Basics, Step2Description, Step3Photo, Step4Review, Step5Publish
   components/ Field, StepIndicator, ProductPreview, PublishStatus
   hooks/   useProductForm, usePublish

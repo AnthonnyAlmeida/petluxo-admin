@@ -3,6 +3,7 @@ import LoginPage from './pages/LoginPage'
 import AdminPage from './pages/AdminPage'
 import ProductsPage from './pages/ProductsPage'
 import CategoriesPage from './pages/CategoriesPage'
+import NotFoundPage from './pages/NotFoundPage'
 
 function PrivateRoute({ children }) {
   const isAuth = !!sessionStorage.getItem('petluxo-admin-auth')
@@ -38,7 +39,8 @@ export default function App() {
             </PrivateRoute>
           }
         />
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>
   )
