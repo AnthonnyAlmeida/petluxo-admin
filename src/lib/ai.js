@@ -1,7 +1,11 @@
 export async function fillProductWithAI(prompt) {
+  const token = sessionStorage.getItem('petluxo-admin-auth')
   const response = await fetch('/api/ai', {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
+    headers: {
+      'content-type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
     body: JSON.stringify({ prompt }),
   })
   const data = await response.json()

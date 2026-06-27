@@ -1,7 +1,11 @@
 async function githubRequest(operation, params) {
+  const token = sessionStorage.getItem('petluxo-admin-auth')
   const res = await fetch('/api/github', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
     body: JSON.stringify({ operation, params }),
   })
   const data = await res.json()

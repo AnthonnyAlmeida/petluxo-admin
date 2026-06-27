@@ -1,8 +1,20 @@
+import { verifyToken } from './auth.js'
+
 export const config = { runtime: 'edge' }
 
 export default async function handler(request) {
   if (request.method !== 'POST') {
     return new Response('Method not allowed', { status: 405 })
+  }
+
+  const authHeader = request.headers.get('Authorization') || ''
+  const token = authHeader.replace(/^Bearer\s+/i, '')
+  const valid = await verifyToken(token, process.env.ADMIN_PASSWORD)
+  if (!valid) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    })
   }
 
   const { prompt } = await request.json()

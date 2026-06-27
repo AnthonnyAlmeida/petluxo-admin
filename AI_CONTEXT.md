@@ -16,13 +16,23 @@ Painel administrativo React para gestão de produtos e categorias da PetLuxo. Us
 - `.env` na raiz deve conter **todas** as variáveis: as de servidor sem prefixo (`GITHUB_OWNER`, `GITHUB_REPO`, `GITHUB_BRANCH`, `GITHUB_TOKEN`, `ADMIN_PASSWORD`, `CLAUDE_API_KEY`) **e** as de cliente com prefixo (`VITE_GITHUB_OWNER`, `VITE_GITHUB_REPO`, `VITE_GITHUB_BRANCH`)
 - Referência de variáveis: `.env.example` na raiz do projeto
 
+## Autenticação e segurança das Edge Functions
+- `api/auth.js` valida `password` contra `ADMIN_PASSWORD`. Em caso de sucesso, gera um token assinado: `ts.sigHex`, onde `ts` é `Date.now()` e `sigHex` é a assinatura HMAC-SHA256 de `ts` usando `ADMIN_PASSWORD` como chave (Web Crypto `crypto.subtle`, sem dependência externa)
+- `api/auth.js` exporta `verifyToken(token, secret)` — reconstrói a assinatura via `crypto.subtle.verify` e rejeita tokens com mais de 24h (`Date.now() - ts > 86400000`). `api/github.js` e `api/ai.js` importam essa função
+- `api/github.js` e `api/ai.js` exigem header `Authorization: Bearer <token>` em toda requisição; sem token válido, respondem `401` antes de executar qualquer operação — nenhuma das duas funções aceita chamadas anônimas
+- `src/lib/github.js` (`githubRequest`) e `src/lib/ai.js` (`fillProductWithAI`) leem o token de `sessionStorage.getItem('petluxo-admin-auth')` e o enviam em todo `fetch` via header `Authorization`
+- `PrivateRoute` (`App.jsx`) continua checando `!!sessionStorage.getItem('petluxo-admin-auth')` no cliente — isso só controla a navegação da SPA; a validação que importa de fato é a verificação HMAC no servidor, feita a cada chamada a `/api/github` e `/api/ai`
+- `api/github.js` restringe `params.path` a uma allowlist de prefixos: `src/data/` e `public/images/products/` — qualquer outro path retorna `400`. O path é codificado por segmento (`encodeURIComponent` em cada parte entre `/`, preservando as barras) antes de compor a URL da API do GitHub, evitando injeção de caracteres especiais (`?`, `&`, espaços) na query string
+- `api/auth.js` mantém um rate limiter em memória (`Map` por IP, extraído de `x-forwarded-for`/`x-real-ip`): bloqueia com `429` após 5 tentativas de senha incorreta em 15 minutos, resetando o contador em login bem-sucedido
+  - **Limitação conhecida**: esse `Map` vive no módulo da função e não é compartilhado entre invocações distribuídas do Edge Runtime. Em teste local com `vercel dev`, cada chamada recriou o módulo com `Map` vazio — ou seja, o limite de 5 tentativas **não bloqueou** uma 6ª tentativa na prática local. Em produção na Vercel, o comportamento é igualmente não confiável: instâncias de edge em regiões diferentes (ou isolates reciclados) não compartilham esse estado. Funciona apenas como mitigação parcial best-effort dentro de uma mesma instância "quente"; não é um rate limit garantido. Para proteção real contra brute-force seria necessário um armazenamento externo compartilhado (ex.: Vercel KV/Upstash) — não implementado nesta versão
+
 ## Rotas (App.jsx)
 - `/login` → LoginPage
 - `/admin` → AdminPage (protegida) — criação e edição de produto
 - `/admin/products` → ProductsPage (protegida)
 - `/admin/categories` → CategoriesPage (protegida) — gerenciamento de categorias
 - `*` → NotFoundPage (404) — não redireciona mais para `/login`
-- Após login bem-sucedido: navega para `/admin/products`; `PrivateRoute` checa `!!sessionStorage.getItem('petluxo-admin-auth')` (token UUID)
+- Após login bem-sucedido: navega para `/admin/products`; `PrivateRoute` checa `!!sessionStorage.getItem('petluxo-admin-auth')` (token HMAC `ts.sigHex`, ver seção "Autenticação e segurança das Edge Functions")
 
 ## Tema global e estilos base
 - `src/styles/variables.css` define `--color-cream: #faf7f2` e `--color-cream-dark: #f0e6d0`; `src/styles/globals.css` ainda aplica `background: var(--color-cream)` no `body` — resquício do tema claro original
@@ -32,7 +42,7 @@ Painel administrativo React para gestão de produtos e categorias da PetLuxo. Us
 - `canvasRef` + `useEffect`: animação Matrix rain via Canvas API (`setInterval` de 55ms), redesenhada em `resize` da janela; caracteres mistos (katakana, hex, símbolos `✦◆▸▹<>{}[]|`), tons dourados (`rgba(201,169,110,...)`), efeito puramente decorativo, `pointer-events: none`
 - Relógio (`time`) atualizado a cada 1s via `setInterval`, exibido no rodapé do card (`toLocaleTimeString('pt-BR')`)
 - `.scanline`: barra animada que desliza verticalmente sobre o card (CSS puro); `.glitch` no logo "✦ PetLuxo" (deslocamento de camadas via `text-shadow`/`clip-path`, CSS puro); `.statusRow` com dot pulsante + texto "Sistema seguro — conexão criptografada"
-- `handleSubmit`: trata erro via `data.error || 'Senha incorreta'` lançado como `Error` quando `!res.ok`; `api/auth.js` hoje responde apenas `{ ok: false }` em falha (sem `error`), então o fallback é o que é exibido na prática
+- `handleSubmit`: trata erro via `data.error || 'Senha incorreta'` lançado como `Error` quando `!res.ok`; `api/auth.js` responde `{ ok: false }` em senha incorreta (sem `error`) e `{ ok: false, error: '...' }` com status `429` quando o rate limiter bloqueia o IP — nesse segundo caso a mensagem do servidor é exibida diretamente
 
 ## NotFoundPage.jsx
 - Rota catch-all (`*`) do `App.jsx`; substitui o redirect silencioso para `/login` que existia antes — qualquer URL desconhecida agora renderiza uma página 404 própria
@@ -44,9 +54,9 @@ Painel administrativo React para gestão de produtos e categorias da PetLuxo. Us
 ## Estrutura de arquivos
 ```
 api/
-  auth.js    Edge Function — valida ADMIN_PASSWORD e retorna token UUID de sessão
-  github.js  Edge Function — proxy para GitHub Contents API (token protegido)
-  ai.js      Edge Function — proxy para Anthropic API (chave protegida)
+  auth.js    Edge Function — valida ADMIN_PASSWORD, aplica rate limiting por IP, gera token HMAC-SHA256 (ts.sigHex) e exporta verifyToken()
+  github.js  Edge Function — exige token válido (Authorization: Bearer), restringe path por allowlist, proxy para GitHub Contents API (token protegido)
+  ai.js      Edge Function — exige token válido (Authorization: Bearer), proxy para Anthropic API (chave protegida)
 src/
   pages/   LoginPage, AdminPage, ProductsPage, CategoriesPage, NotFoundPage
   steps/   Step1Basics, Step2Description, Step3Photo, Step4Review, Step5Publish
@@ -63,6 +73,7 @@ src/
 3. Caminhos de imagem sempre com `/` inicial: `/images/products/arquivo.webp`
 4. `products.js` usa JS puro: chaves sem aspas, strings com aspas simples — gerado por `productToJS()`
 5. Categorias não são hardcoded: `parseCategories()` em `github.js` extrai `CATEGORIES` do mesmo `products.js` do repo petluxo
+6. Toda chamada de `src/lib/github.js` e `src/lib/ai.js` para `/api/github`/`/api/ai` envia `Authorization: Bearer <token>` lido de `sessionStorage`; as Edge Functions rejeitam com `401` qualquer chamada sem token válido
 
 ## Modelo de produto
 Campos: `id, name, shortName, subtitle, description, bullets, category[], order, categoryOrder{}, featured, visible, image, badge, tags, originalPrice, supplierLink`
@@ -89,9 +100,9 @@ URL de imagens: `https://raw.githubusercontent.com/${VITE_GITHUB_OWNER}/${VITE_G
 - `normalizeCategoryOrder(product, allProducts)` → adiciona entradas faltantes (com `generateNextCategoryOrder`), remove entradas de categorias que o produto não pertence mais, mantém valores existentes
 
 ## github.js — funções exportadas
-- Todas as operações HTTP passam por `/api/github` (Edge Function) via `githubRequest(operation, params)` — o token nunca chega ao browser
+- Todas as operações HTTP passam por `/api/github` (Edge Function) via `githubRequest(operation, params)` — o token do GitHub nunca chega ao browser; cada chamada envia também o token de sessão (`Authorization: Bearer`) lido de `sessionStorage`
 - `getProductsFile()` → `{ content, sha }`; força `cache: 'no-store'` via Edge Function (evita SHA stale)
-- `commitFile(path, content, message, sha?)` — recebe conteúdo bruto; codifica em base64 antes de enviar ao proxy
+- `commitFile(path, content, message, sha?)` — recebe conteúdo bruto; codifica em base64 antes de enviar ao proxy; `path` deve começar com `src/data/` ou `public/images/products/` (allowlist validada em `api/github.js`)
 - `commitProducts(content, sha)` / `putProductsFile(content, sha)` — atalhos para products.js
 - `commitImage(filename, base64Content)` — busca SHA existente via `getFile` e faz upload via `putFile`
 - `parseProducts(content)` → array objetos; `parseCategories(content)` → array `{ id, label, visible? }` (visible: false = oculto; ausente ou true = visível)
@@ -104,7 +115,7 @@ URL de imagens: `https://raw.githubusercontent.com/${VITE_GITHUB_OWNER}/${VITE_G
 - **Unicidade de `featured`**: em `publish()`/`update()`, após montar `updatedContent` (produto novo/editado já aplicado) e se `fields.featured === true`, reparseia `updatedContent` com `parseProducts`, encontra outros produtos com `featured: true` (id diferente do atual) e chama `replaceProductInFile` para cada um, setando `featured: false` — encadeando `updatedContent` a cada chamada antes do commit final
 
 ## Integração com IA
-- `src/lib/ai.js` — `fillProductWithAI(prompt)`: chama `/api/ai` (Edge Function) que repassa ao Anthropic `claude-haiku-4-5-20251001`; `CLAUDE_API_KEY` fica apenas no servidor
+- `src/lib/ai.js` — `fillProductWithAI(prompt)`: chama `/api/ai` (Edge Function) enviando `Authorization: Bearer <token>` (de `sessionStorage`); a função repassa ao Anthropic `claude-haiku-4-5-20251001` apenas se o token for válido; `CLAUDE_API_KEY` fica apenas no servidor
 - `src/lib/promptGenerator.js` — `generateAIFillPrompt(rawText, categories)`: injeta IDs válidos; tom premium sem emojis
 
 ## AdminPage.jsx
